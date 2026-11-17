@@ -1,0 +1,8 @@
+[
+  { "id": "salgados", "nome": "Salgados", "icone": "food-croissant" },
+  { "id": "lanches", "nome": "Lanches", "icone": "hamburger" },
+  { "id": "pratos", "nome": "Pratos", "icone": "silverware-fork-knife" },
+  { "id": "bebidas", "nome": "Bebidas", "icone": "bottle-soda" },
+  { "id": "cafes", "nome": "Cafés", "icone": "coffee" },
+  { "id": "doces", "nome": "Doces", "icone": "cupcake" }
+]
