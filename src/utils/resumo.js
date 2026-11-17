@@ -27,12 +27,24 @@ function itensDe(pedidos) {
   return (pedidos || []).flatMap((pedido) => pedido.itens || []);
 }
 
+// O total sai dos itens, que é de onde saem as barras, para os números da tela fecharem entre si.
+// O `total` gravado no pedido só entra quando o pedido chega sem itens.
 function totalDoPedido(pedido) {
-  if (pedido.total === undefined || pedido.total === null) {
-    return (pedido.itens || []).reduce((soma, item) => soma + valorDoItem(item), 0);
+  const itens = pedido.itens || [];
+
+  if (itens.length === 0) {
+    return emCentavos(pedido.total);
   }
 
-  return emCentavos(pedido.total);
+  return itens.reduce((soma, item) => soma + valorDoItem(item), 0);
+}
+
+// Data sem hora ("2026-11-17") é lida como UTC pelo Date e cairia no dia anterior
+// no Brasil, então monto no horário local.
+function paraData(iso) {
+  const soData = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso).trim());
+
+  return soData ? new Date(Number(soData[1]), Number(soData[2]) - 1, Number(soData[3])) : new Date(iso);
 }
 
 export function filtrarPorPeriodo(pedidos, periodo, agora = new Date()) {
@@ -47,7 +59,7 @@ export function filtrarPorPeriodo(pedidos, periodo, agora = new Date()) {
   const inicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - (dias - 1));
 
   return lista.filter((pedido) => {
-    const criado = new Date(pedido.criadoEm);
+    const criado = paraData(pedido.criadoEm);
     return !Number.isNaN(criado.getTime()) && criado >= inicio;
   });
 }
@@ -58,7 +70,7 @@ function agruparItens(pedidos) {
   itensDe(pedidos).forEach((item) => {
     const chave = String(item.produtoId !== undefined && item.produtoId !== null ? item.produtoId : item.nome);
     if (!grupos[chave]) {
-      grupos[chave] = { nome: item.nome, quantidade: 0, centavos: 0 };
+      grupos[chave] = { produtoId: item.produtoId, nome: item.nome, quantidade: 0, centavos: 0 };
     }
     grupos[chave].quantidade += quantidadeDo(item);
     grupos[chave].centavos += valorDoItem(item);
@@ -77,7 +89,12 @@ function agruparItens(pedidos) {
 export function itensMaisPedidos(pedidos, limite = 5) {
   return agruparItens(pedidos)
     .slice(0, limite)
-    .map((grupo) => ({ nome: grupo.nome, quantidade: grupo.quantidade, valor: emReais(grupo.centavos) }));
+    .map((grupo) => ({
+      produtoId: grupo.produtoId,
+      nome: grupo.nome,
+      quantidade: grupo.quantidade,
+      valor: emReais(grupo.centavos),
+    }));
 }
 
 export function resumir(pedidos) {
@@ -110,19 +127,24 @@ export function gastoPorCategoria(pedidos, categorias) {
     .sort((a, b) => b.centavos - a.centavos || String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
   const total = comValor.reduce((soma, grupo) => soma + grupo.centavos, 0);
 
-  const lista = comValor.map((grupo) => ({
+  // Método do maior resto: todo mundo arredonda para baixo e os pontos que faltam para 100
+  // vão para quem tem a maior parte decimal. No empate, leva quem vem antes na lista.
+  const percentuais = comValor.map((grupo) => Math.floor((grupo.centavos * 100) / total));
+  const faltam = 100 - percentuais.reduce((soma, atual) => soma + atual, 0);
+
+  comValor
+    .map((grupo, indice) => ({ indice, resto: (grupo.centavos * 100) % total }))
+    .sort((a, b) => b.resto - a.resto || a.indice - b.indice)
+    .slice(0, faltam)
+    .forEach((escolhido) => {
+      percentuais[escolhido.indice] += 1;
+    });
+
+  return comValor.map((grupo, indice) => ({
     id: grupo.id,
     nome: grupo.nome,
     icone: grupo.icone,
     valor: emReais(grupo.centavos),
-    percentual: Math.round((grupo.centavos / total) * 100),
+    percentual: percentuais[indice],
   }));
-
-  // Arredondando cada um, a soma pode dar 99 ou 101. A diferença vai para a maior categoria.
-  if (lista.length) {
-    const soma = lista.reduce((parcial, atual) => parcial + atual.percentual, 0);
-    lista[0].percentual += 100 - soma;
-  }
-
-  return lista;
 }
