@@ -38,7 +38,8 @@ describe('ItemCardapio', () => {
     expect(screen.getByText('Coxinha de frango')).toBeOnTheScreen();
     expect(screen.getByText('Frango desfiado com requeijão, frita na hora.')).toBeOnTheScreen();
     expect(screen.getByText('R$ 7,50')).toBeOnTheScreen();
-    expect(screen.getByText('food-croissant')).toBeOnTheScreen();
+    // O ícone é enfeite e fica fora da leitura de tela, por isso a busca inclui os escondidos.
+    expect(screen.getByText('food-croissant', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it('limita a descrição a duas linhas', () => {
@@ -52,7 +53,7 @@ describe('ItemCardapio', () => {
   it('usa um ícone padrão quando a categoria não veio', () => {
     montar({ categoria: undefined });
 
-    expect(screen.getByText('food')).toBeOnTheScreen();
+    expect(screen.getByText('food', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it('fora do carrinho, o botão Adicionar avisa o pai com o produto', () => {
