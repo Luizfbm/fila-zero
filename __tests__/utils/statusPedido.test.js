@@ -1,7 +1,8 @@
 import { rotuloStatus, statusAtual, tomStatus } from '../../src/utils/statusPedido';
 
-const CRIADO_EM = '2026-11-17T12:00:00.000Z';
-const INICIO = new Date(CRIADO_EM).getTime();
+// Meio-dia no horário do aparelho, para os testes não dependerem do fuso.
+const INICIO = new Date(2026, 10, 17, 12, 0, 0).getTime();
+const CRIADO_EM = new Date(INICIO).toISOString();
 const SEGUNDO = 1000;
 const MINUTO = 60 * SEGUNDO;
 
@@ -49,6 +50,36 @@ describe('statusAtual', () => {
 
   it('não avança se o relógio do aparelho estiver atrás da data do pedido', () => {
     expect(statusAtual(pedido('recebido'), INICIO - 10 * MINUTO)).toBe('recebido');
+  });
+});
+
+describe('statusAtual com pedido de outro dia', () => {
+  function recebidoEm(data) {
+    return { id: 9, status: 'recebido', criadoEm: data.toISOString() };
+  }
+
+  it('conta como retirado o pedido recebido que ficou de um dia anterior', () => {
+    const ontem = recebidoEm(new Date(2026, 10, 16, 12, 0, 0));
+
+    expect(statusAtual(ontem, new Date(2026, 10, 17, 12, 0, 0))).toBe('retirado');
+  });
+
+  it('vale a virada do dia no aparelho, mesmo com menos de um minuto de pedido', () => {
+    const quaseMeiaNoite = recebidoEm(new Date(2026, 10, 16, 23, 59, 50));
+
+    expect(statusAtual(quaseMeiaNoite, new Date(2026, 10, 17, 0, 0, 10))).toBe('retirado');
+  });
+
+  it('no mesmo dia continua pronto, por mais antigo que seja', () => {
+    const cedo = recebidoEm(new Date(2026, 10, 17, 7, 0, 0));
+
+    expect(statusAtual(cedo, new Date(2026, 10, 17, 22, 0, 0))).toBe('pronto');
+  });
+
+  it('não mexe em pedido de outro dia que veio da API com outro status', () => {
+    const antigo = { id: 9, status: 'pronto', criadoEm: new Date(2026, 10, 10, 12, 0, 0).toISOString() };
+
+    expect(statusAtual(antigo, new Date(2026, 10, 17, 12, 0, 0))).toBe('pronto');
   });
 });
 
