@@ -16,15 +16,29 @@ const TONS = {
   retirado: 'neutro',
 };
 
-// Simulação: a API de exemplo não tem cozinha de verdade, então o pedido recebido anda sozinho pelo tempo.
+function diaLocal(data) {
+  return data.getFullYear() * 10000 + data.getMonth() * 100 + data.getDate();
+}
+
+// Simulação: a API de exemplo não tem cozinha de verdade, então o pedido recebido anda sozinho pelo tempo e o de outro dia conta como retirado.
 export function statusAtual(pedido, agora) {
   const status = pedido.status || 'recebido';
   if (status !== 'recebido') {
     return status;
   }
 
-  const decorrido = new Date(agora).getTime() - new Date(pedido.criadoEm).getTime();
-  if (Number.isNaN(decorrido) || decorrido < MINUTO) {
+  const criado = new Date(pedido.criadoEm);
+  const momento = new Date(agora);
+  const decorrido = momento.getTime() - criado.getTime();
+  if (Number.isNaN(decorrido)) {
+    return 'recebido';
+  }
+
+  if (diaLocal(criado) < diaLocal(momento)) {
+    return 'retirado';
+  }
+
+  if (decorrido < MINUTO) {
     return 'recebido';
   }
 
