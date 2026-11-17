@@ -14,7 +14,9 @@ export default function CartaoPedido({ pedido, status, aberto = false, aoAlterna
   const observacao = pedido.observacao ? String(pedido.observacao).trim() : '';
   const data = formatarData(pedido.criadoEm);
   const numero = `Pedido nº ${numeroDoPedido(pedido.id)}`;
-  const legenda = data ? `${numero}, feito em ${data}` : numero;
+  // Na tela vai a versão curta, que cabe em uma linha no celular. O leitor de tela ouve a frase inteira.
+  const legenda = data ? `${numero}, ${data}` : numero;
+  const legendaFalada = data ? `${numero}, feito em ${data}` : numero;
   const apagado = status === 'retirado' ? styles.apagado : null;
 
   return (
@@ -32,7 +34,9 @@ export default function CartaoPedido({ pedido, status, aberto = false, aoAlterna
             {pedido.retirada ? (
               <Text style={[styles.retirada, apagado]}>Retirada às {pedido.retirada}</Text>
             ) : null}
-            <Text style={styles.legenda}>{legenda}</Text>
+            <Text style={styles.legenda} numberOfLines={1} accessibilityLabel={legendaFalada}>
+              {legenda}
+            </Text>
           </View>
           <Etiqueta texto={rotuloStatus(status)} tom={tomStatus(status)} />
         </View>
