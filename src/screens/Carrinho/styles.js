@@ -18,7 +18,6 @@ export default StyleSheet.create({
   lista: {
     ...coluna,
     padding: espacos.md,
-    paddingBottom: espacos.xl,
   },
   centro: {
     ...coluna,
@@ -43,37 +42,46 @@ export default StyleSheet.create({
     textAlign: 'right',
     marginBottom: espacos.md,
   },
-  resumo: {
-    marginBottom: espacos.md,
+  rolagem: {
+    flex: 1,
   },
-  linhaDoResumo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: espacos.sm,
+  // O aviso fica preso logo acima da barra, para aparecer onde a pessoa acabou de tocar.
+  faixaDoAviso: {
+    ...coluna,
+    paddingHorizontal: espacos.md,
+    paddingBottom: espacos.sm,
   },
-  linhaDoTotal: {
-    marginTop: espacos.sm,
-    paddingTop: espacos.sm,
+  // Irmã da lista: fica sempre no pé da tela enquanto os itens rolam por cima.
+  barra: {
+    backgroundColor: cores.superficie,
     borderTopWidth: 1,
     borderTopColor: cores.borda,
   },
-  resumoRotulo: {
-    ...fontes.corpo,
-    color: cores.textoSuave,
+  barraConteudo: {
+    ...coluna,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: espacos.md,
+    paddingHorizontal: espacos.md,
+    paddingVertical: espacos.sm,
   },
-  resumoValor: {
-    ...fontes.corpo,
+  // flexShrink deixa o total ceder espaço ao botão numa tela estreita.
+  barraTotal: {
+    flexShrink: 1,
   },
-  totalRotulo: {
-    ...fontes.subtitulo,
+  barraLegenda: {
+    ...fontes.legenda,
+    fontWeight: '600',
+    color: cores.texto,
+  },
+  barraItens: {
+    ...fontes.legenda,
+    fontWeight: '400',
   },
   totalValor: {
     ...fontes.titulo,
     color: cores.primariaEscura,
-  },
-  aviso: {
-    marginBottom: espacos.md,
   },
   confirmacaoTitulo: {
     ...fontes.titulo,
@@ -85,6 +93,11 @@ export default StyleSheet.create({
     color: cores.textoSuave,
     textAlign: 'center',
     marginTop: espacos.sm,
+  },
+  confirmacaoTotal: {
+    ...fontes.subtitulo,
+    textAlign: 'center',
+    marginTop: espacos.md,
   },
   // Os dois botões com a mesma largura, um embaixo do outro.
   confirmacaoAcoes: {

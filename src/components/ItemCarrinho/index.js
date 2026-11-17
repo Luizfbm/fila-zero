@@ -25,7 +25,13 @@ export default function ItemCarrinho({ item, aoAumentar, aoDiminuir, aoRemover }
           accessibilityLabel={`Remover ${produto.nome}`}
           style={({ pressed }) => [styles.remover, pressed && styles.removerPressionado]}
         >
-          <MaterialCommunityIcons name="trash-can-outline" size={22} color={cores.erro} />
+          {({ pressed }) => (
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={22}
+              color={pressed ? cores.erro : cores.textoSuave}
+            />
+          )}
         </Pressable>
       </View>
       <View style={styles.rodape}>

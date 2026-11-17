@@ -4,7 +4,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Aviso from '../../components/Aviso';
 import Botao from '../../components/Botao';
 import CampoTexto from '../../components/CampoTexto';
-import Cartao from '../../components/Cartao';
 import EstadoVazio from '../../components/EstadoVazio';
 import ItemCarrinho from '../../components/ItemCarrinho';
 import Seletor from '../../components/Seletor';
@@ -26,6 +25,11 @@ const opcoesDeHorario = [
   ...horarios.map((horario) => ({ rotulo: horario, valor: horario })),
 ];
 
+// O pedido guardado só no aparelho vem como "local-3"; para a pessoa, é o pedido 3.
+function numeroDoPedido(id) {
+  return String(id).replace('local-', '');
+}
+
 export default function Carrinho({ navigation }) {
   const { usuario } = useUsuario();
   const { itens, total, quantidade, remover, alterarQuantidade, limpar } = useCarrinho();
@@ -39,9 +43,12 @@ export default function Carrinho({ navigation }) {
   // Guarda o pedido que acabou de ser aceito enquanto a confirmação está na tela.
   const [confirmado, setConfirmado] = useState(null);
 
-  // Quem sai da tela e volta depois encontra o carrinho, não a confirmação de um pedido antigo.
+  // Quem sai da tela e volta depois encontra o carrinho, sem a confirmação nem o erro de antes.
   useEffect(() => {
-    const cancelar = navigation.addListener('blur', () => setConfirmado(null));
+    const cancelar = navigation.addListener('blur', () => {
+      setConfirmado(null);
+      setErroDoEnvio('');
+    });
     return cancelar;
   }, [navigation]);
 
@@ -106,9 +113,11 @@ export default function Carrinho({ navigation }) {
         <View style={styles.centro}>
           <MaterialCommunityIcons name="check-circle" size={72} color={cores.sucesso} />
           <Text style={styles.confirmacaoTitulo} accessibilityRole="header">
-            Pedido nº {confirmado.id} recebido
+            Pedido nº {numeroDoPedido(confirmado.id)} recebido
           </Text>
           <Text style={styles.confirmacaoTexto}>Retire no balcão às {confirmado.retirada}</Text>
+          <Text style={styles.confirmacaoTotal}>Total: {formatarMoeda(confirmado.total)}</Text>
+          <Text style={styles.confirmacaoTexto}>Acompanhe o andamento em Meus pedidos.</Text>
           <View style={styles.confirmacaoAcoes}>
             <Botao titulo="Ver meus pedidos" onPress={() => navigation.navigate(ROTAS.PEDIDOS)} />
             <Botao
@@ -129,7 +138,7 @@ export default function Carrinho({ navigation }) {
           <EstadoVazio
             icone="cart-outline"
             titulo="Seu carrinho está vazio"
-            mensagem="Escolha alguma coisa no cardápio para montar o pedido."
+            mensagem="Escolha o que vai querer no cardápio e o pedido aparece aqui."
             acao={{ titulo: 'Ver cardápio', onPress: () => navigation.navigate(ROTAS.CARDAPIO) }}
           />
         </View>
@@ -143,7 +152,7 @@ export default function Carrinho({ navigation }) {
         Retirada
       </Text>
       <Seletor
-        rotulo="Horário de retirada"
+        rotulo="Horário"
         valor={retirada}
         aoMudar={escolherRetirada}
         opcoes={opcoesDeHorario}
@@ -160,32 +169,12 @@ export default function Carrinho({ navigation }) {
         maxLength={LIMITE_DA_OBSERVACAO}
         style={styles.observacao}
       />
-      <Text style={styles.contador}>
+      <Text
+        style={styles.contador}
+        accessibilityLabel={`${observacao.length} de ${LIMITE_DA_OBSERVACAO} caracteres`}
+      >
         {observacao.length}/{LIMITE_DA_OBSERVACAO}
       </Text>
-
-      <Cartao style={styles.resumo}>
-        <View style={styles.linhaDoResumo}>
-          <Text style={styles.resumoRotulo}>Itens</Text>
-          <Text style={styles.resumoValor}>
-            {quantidade} {quantidade === 1 ? 'unidade' : 'unidades'}
-          </Text>
-        </View>
-        <View style={[styles.linhaDoResumo, styles.linhaDoTotal]}>
-          <Text style={styles.totalRotulo}>Total</Text>
-          <Text style={styles.totalValor}>{formatarMoeda(total)}</Text>
-        </View>
-      </Cartao>
-
-      {erroDoEnvio ? (
-        <Aviso
-          tipo="erro"
-          mensagem={erroDoEnvio}
-          acao={{ titulo: 'Tentar de novo', onPress: confirmar }}
-          style={styles.aviso}
-        />
-      ) : null}
-      <Botao titulo="Confirmar pedido" onPress={confirmar} carregando={enviando} />
     </View>
   );
 
@@ -205,7 +194,29 @@ export default function Carrinho({ navigation }) {
         ListFooterComponent={rodape}
         contentContainerStyle={styles.lista}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        style={styles.rolagem}
       />
+      {erroDoEnvio ? (
+        <View style={styles.faixaDoAviso}>
+          <Aviso
+            tipo="erro"
+            mensagem={erroDoEnvio}
+            acao={{ titulo: 'Tentar de novo', onPress: confirmar }}
+          />
+        </View>
+      ) : null}
+      <View style={styles.barra}>
+        <View style={styles.barraConteudo}>
+          <View style={styles.barraTotal}>
+            <Text style={styles.barraLegenda}>
+              Total <Text style={styles.barraItens}>{quantidade === 1 ? '1 item' : `${quantidade} itens`}</Text>
+            </Text>
+            <Text style={styles.totalValor}>{formatarMoeda(total)}</Text>
+          </View>
+          <Botao titulo="Confirmar pedido" onPress={confirmar} carregando={enviando} />
+        </View>
+      </View>
     </View>
   );
 }
