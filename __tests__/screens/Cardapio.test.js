@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { act, render, screen, fireEvent } from '@testing-library/react-native';
 import Cardapio from '../../src/screens/Cardapio';
 import { UsuarioProvider, useUsuario } from '../../src/contexts/UsuarioContext';
 import { CarrinhoProvider } from '../../src/contexts/CarrinhoContext';
@@ -20,6 +20,8 @@ const produtos = [
   { id: '4', nome: 'Suco de maracujá', descricao: 'Copo de 300 ml.', preco: 6, categoria: 'bebidas', disponivel: true },
   { id: '5', nome: 'Café com leite', descricao: 'Xícara média.', preco: 4.5, categoria: 'cafes', disponivel: true },
 ];
+
+const AVISO_DE_EXEMPLO = 'Este é um cardápio de exemplo. Itens e preços podem não ser os da cantina.';
 
 const maria = { id: 'u1', nome: 'Maria Clara Souza', email: 'maria@faculdade.br' };
 
@@ -84,7 +86,40 @@ describe('Cardapio', () => {
       expect(screen.getByText(produto.nome)).toBeOnTheScreen();
     });
     expect(screen.getByText('R$ 7,50')).toBeOnTheScreen();
-    expect(screen.getByText('5 itens')).toBeOnTheScreen();
+  });
+
+  it('sem busca nem filtro não mostra contador', async () => {
+    await montarCarregado();
+
+    expect(screen.queryByText(/produto/)).toBeNull();
+  });
+
+  it('deixa os esgotados no fim da lista, sem mexer na ordem dos outros', async () => {
+    await montarCarregado();
+
+    const nomes = screen
+      .getAllByText(/^(Coxinha de frango|Pão de queijo|Empada de palmito|Suco de maracujá|Café com leite)$/)
+      .map((texto) => texto.props.children);
+
+    expect(nomes).toEqual([
+      'Coxinha de frango',
+      'Pão de queijo',
+      'Suco de maracujá',
+      'Café com leite',
+      'Empada de palmito',
+    ]);
+  });
+
+  it('a saudação ocupa uma linha só, sem frase de chamada', async () => {
+    await montarCarregado();
+
+    expect(screen.queryByText('O que você vai pedir hoje?')).toBeNull();
+  });
+
+  it('a busca dá um exemplo do que digitar', async () => {
+    await montarCarregado();
+
+    expect(screen.getByLabelText('Buscar no cardápio').props.placeholder).toBe('Ex.: coxinha');
   });
 
   it('cumprimenta a pessoa pelo primeiro nome', async () => {
@@ -111,7 +146,7 @@ describe('Cardapio', () => {
     expect(screen.getByText('Suco de maracujá')).toBeOnTheScreen();
     expect(screen.queryByText('Coxinha de frango')).toBeNull();
     expect(screen.queryByText('Café com leite')).toBeNull();
-    expect(screen.getByText('1 item')).toBeOnTheScreen();
+    expect(screen.getByText('1 de 5 produtos')).toBeOnTheScreen();
   });
 
   it('a busca acha o nome mesmo sem acento e sem maiúscula', async () => {
@@ -136,7 +171,7 @@ describe('Cardapio', () => {
     expect(screen.getByText('Pão de queijo')).toBeOnTheScreen();
     expect(screen.getByText('Empada de palmito')).toBeOnTheScreen();
     expect(screen.queryByText('Suco de maracujá')).toBeNull();
-    expect(screen.getByText('3 itens')).toBeOnTheScreen();
+    expect(screen.getByText('3 de 5 produtos')).toBeOnTheScreen();
   });
 
   it('sem resultado mostra o estado vazio, e Limpar filtros traz a lista de volta', async () => {
@@ -146,16 +181,48 @@ describe('Cardapio', () => {
     buscar('coxinha');
 
     expect(screen.getByText('Nada encontrado')).toBeOnTheScreen();
-    expect(screen.getByText('Nenhum item de Bebidas tem "coxinha" no nome.')).toBeOnTheScreen();
+    expect(screen.getByText('Nada com "coxinha" em Bebidas.')).toBeOnTheScreen();
+    expect(screen.queryByText(/produto/)).toBeNull();
     expect(screen.queryByText('Coxinha de frango')).toBeNull();
 
     fireEvent.press(screen.getByRole('button', { name: 'Limpar filtros' }));
 
     expect(screen.queryByText('Nada encontrado')).toBeNull();
-    expect(screen.getByText('5 itens')).toBeOnTheScreen();
+    expect(screen.getByText('Coxinha de frango')).toBeOnTheScreen();
+    expect(screen.getByText('Suco de maracujá')).toBeOnTheScreen();
     expect(screen.getByLabelText('Buscar no cardápio').props.value).toBe('');
     // Todas as categorias é a primeira opção do seletor.
     expect(screen.getByLabelText('Categoria').props.selectedIndex).toBe(0);
+  });
+
+  it('só a busca sem resultado diz que não achou no cardápio', async () => {
+    await montarCarregado();
+
+    buscar('pastel');
+
+    expect(screen.getByText('Nada com "pastel" no cardápio.')).toBeOnTheScreen();
+  });
+
+  it('categoria sem nenhum item avisa pelo nome dela', async () => {
+    listarCategorias.mockResolvedValue({
+      dados: [...categorias, { id: 'doces', nome: 'Doces', icone: 'cupcake' }],
+      origem: 'api',
+    });
+    await montarCarregado();
+
+    escolherCategoria('doces');
+
+    expect(screen.getByText('Nenhum item em Doces por enquanto.')).toBeOnTheScreen();
+  });
+
+  it('cardápio sem nenhum produto mostra o estado vazio sem ação', async () => {
+    listarProdutos.mockResolvedValue({ dados: [], origem: 'api' });
+    montar();
+
+    expect(await screen.findByText('Cardápio vazio')).toBeOnTheScreen();
+    expect(screen.getByText('A cantina ainda não cadastrou nenhum item.')).toBeOnTheScreen();
+    expect(screen.getByText('food-off', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Limpar filtros' })).toBeNull();
   });
 
   it('Adicionar põe o item no carrinho e a barra aparece com quantidade e total', async () => {
@@ -164,10 +231,12 @@ describe('Cardapio', () => {
     expect(screen.queryByText('Ver carrinho')).toBeNull();
 
     fireEvent.press(screen.getByRole('button', { name: 'Adicionar Coxinha de frango' }));
-    expect(screen.getByText('1 item · R$ 7,50')).toBeOnTheScreen();
+    expect(screen.getByText('1 item')).toBeOnTheScreen();
+    expect(screen.getAllByText('R$ 7,50')).toHaveLength(2);
 
     fireEvent.press(screen.getByRole('button', { name: 'Adicionar Pão de queijo' }));
-    expect(screen.getByText('2 itens · R$ 12,50')).toBeOnTheScreen();
+    expect(screen.getByText('2 itens')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 12,50')).toBeOnTheScreen();
     expect(screen.getByText('Ver carrinho')).toBeOnTheScreen();
   });
 
@@ -178,7 +247,8 @@ describe('Cardapio', () => {
     expect(screen.queryByRole('button', { name: 'Adicionar Coxinha de frango' })).toBeNull();
 
     fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade' }));
-    expect(screen.getByText('2 itens · R$ 15,00')).toBeOnTheScreen();
+    expect(screen.getByText('2 itens')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 15,00')).toBeOnTheScreen();
 
     fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
     fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
@@ -208,15 +278,22 @@ describe('Cardapio', () => {
     await montarCarregado();
 
     expect(
-      screen.getByText('Este cardápio é de exemplo e está guardado no aparelho.')
+      screen.getByText(AVISO_DE_EXEMPLO)
     ).toBeOnTheScreen();
+  });
+
+  it('avisa também quando só as categorias vieram do aparelho', async () => {
+    listarCategorias.mockResolvedValue({ dados: categorias, origem: 'local' });
+    await montarCarregado();
+
+    expect(screen.getByText(AVISO_DE_EXEMPLO)).toBeOnTheScreen();
   });
 
   it('não mostra o aviso de exemplo quando os dados vieram da API', async () => {
     await montarCarregado();
 
     expect(
-      screen.queryByText('Este cardápio é de exemplo e está guardado no aparelho.')
+      screen.queryByText(AVISO_DE_EXEMPLO)
     ).toBeNull();
   });
 
@@ -231,5 +308,20 @@ describe('Cardapio', () => {
 
     expect(await screen.findByText('Coxinha de frango')).toBeOnTheScreen();
     expect(screen.queryByText('Não deu para carregar o cardápio.')).toBeNull();
+  });
+
+  it('se a tela fechar antes de a carga terminar, a resposta é ignorada', async () => {
+    let responder;
+    listarProdutos.mockReturnValue(new Promise((resolve) => { responder = resolve; }));
+    const erros = jest.spyOn(console, 'error').mockImplementation(() => {});
+    montar();
+
+    screen.unmount();
+    await act(async () => {
+      responder({ dados: produtos, origem: 'api' });
+    });
+
+    expect(erros).not.toHaveBeenCalled();
+    erros.mockRestore();
   });
 });

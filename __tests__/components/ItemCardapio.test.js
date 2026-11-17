@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import ItemCardapio from '../../src/components/ItemCardapio';
+import { cores, fontes } from '../../src/theme';
 
 const coxinha = {
   id: '1',
@@ -85,9 +86,32 @@ describe('ItemCardapio', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 
-  it('esgotado fica esmaecido', () => {
+  it('esgotado esmaece só o ícone e o preço, e o texto fica na cor suave', () => {
     montar({ produto: { ...coxinha, disponivel: false } });
 
-    expect(screen.getByTestId('item-cardapio-conteudo')).toHaveStyle({ opacity: 0.55 });
+    expect(screen.getByTestId('item-cardapio-icone')).toHaveStyle({ opacity: 0.55 });
+    expect(screen.getByText('R$ 7,50')).toHaveStyle({ opacity: 0.55 });
+    expect(screen.getByText('Coxinha de frango')).toHaveStyle({ color: cores.textoSuave });
+    expect(screen.getByText('Frango desfiado com requeijão, frita na hora.')).toHaveStyle({
+      color: cores.textoSuave,
+    });
+    expect(screen.getByText('Coxinha de frango')).not.toHaveStyle({ opacity: 0.55 });
+  });
+
+  it('disponível mantém o nome na cor normal do texto', () => {
+    montar();
+
+    expect(screen.getByText('Coxinha de frango')).toHaveStyle({ color: cores.texto });
+    expect(screen.getByTestId('item-cardapio-icone')).not.toHaveStyle({ opacity: 0.55 });
+  });
+
+  it('só usa tamanhos de letra do tema', () => {
+    montar();
+
+    expect(screen.getByText('R$ 7,50')).toHaveStyle({ fontSize: fontes.corpo.fontSize });
+    expect(screen.getByText('Adicionar')).toHaveStyle({ fontSize: fontes.corpo.fontSize });
+    expect(screen.getByText('Frango desfiado com requeijão, frita na hora.')).toHaveStyle({
+      fontSize: fontes.legenda.fontSize,
+    });
   });
 });
