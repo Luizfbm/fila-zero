@@ -1,6 +1,16 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import ItemCarrinho from '../../src/components/ItemCarrinho';
+import { cores } from '../../src/theme';
+
+// Aqui o ícone vira um Text que guarda a cor, para dar para conferir a cor da lixeira.
+jest.mock('@expo/vector-icons', () => {
+  const { createElement } = require('react');
+  const { Text } = require('react-native');
+  return {
+    MaterialCommunityIcons: ({ name, color }) => createElement(Text, { testID: `icone-${name}`, color }, name),
+  };
+});
 
 const coxinha = {
   id: 'p1',
@@ -63,6 +73,12 @@ describe('ItemCarrinho', () => {
     expect(aoAumentar).toHaveBeenCalledTimes(1);
     expect(aoDiminuir).toHaveBeenCalledTimes(1);
     expect(aoRemover).not.toHaveBeenCalled();
+  });
+
+  it('a lixeira fica discreta enquanto ninguém toca nela', () => {
+    montar(2);
+
+    expect(screen.getByTestId('icone-trash-can-outline')).toHaveProp('color', cores.textoSuave);
   });
 
   it('tem um botão de remover que diz o nome do produto', () => {

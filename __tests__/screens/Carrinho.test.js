@@ -6,6 +6,7 @@ import { UsuarioProvider, useUsuario } from '../../src/contexts/UsuarioContext';
 import { CarrinhoProvider, useCarrinho } from '../../src/contexts/CarrinhoContext';
 import { PedidosProvider } from '../../src/contexts/PedidosContext';
 import { criarPedido } from '../../src/services/pedidos';
+import horarios from '../../src/data/horarios.json';
 
 jest.mock('../../src/services/pedidos');
 
@@ -89,7 +90,7 @@ function montar(produtos = doisProdutos) {
 }
 
 function escolherHorario(horario) {
-  fireEvent(screen.getByLabelText('Horário de retirada'), 'valueChange', horario, 1);
+  fireEvent(screen.getByLabelText('Horário'), 'valueChange', horario, 1);
 }
 
 function confirmar() {
@@ -109,6 +110,9 @@ describe('Carrinho', () => {
       montar([]);
 
       expect(screen.getByText('Seu carrinho está vazio')).toBeOnTheScreen();
+      expect(
+        screen.getByText('Escolha o que vai querer no cardápio e o pedido aparece aqui.')
+      ).toBeOnTheScreen();
       expect(screen.getByText('cart-outline', { includeHiddenElements: true })).toBeOnTheScreen();
       expect(screen.queryByRole('button', { name: 'Confirmar pedido' })).toBeNull();
     });
@@ -131,7 +135,7 @@ describe('Carrinho', () => {
       expect(screen.getByText('R$ 6,50')).toBeOnTheScreen();
       expect(screen.getByText('R$ 10,00')).toBeOnTheScreen();
       expect(screen.getByText('R$ 16,50')).toBeOnTheScreen();
-      expect(screen.getByText('3 unidades')).toBeOnTheScreen();
+      expect(screen.getByText('3 itens')).toBeOnTheScreen();
     });
 
     it('aumentar a quantidade muda o subtotal e o total', () => {
@@ -168,7 +172,7 @@ describe('Carrinho', () => {
 
       expect(screen.queryByText('Suco de laranja')).toBeNull();
       expect(screen.getAllByText('R$ 6,50')).toHaveLength(2);
-      expect(screen.getByText('1 unidade')).toBeOnTheScreen();
+      expect(screen.getByText('1 item')).toBeOnTheScreen();
     });
 
     it('remover o último item cai no estado vazio', () => {
@@ -185,7 +189,25 @@ describe('Carrinho', () => {
       montar();
 
       expect(screen.getByText('Retirada')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Horário de retirada')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Horário')).toBeOnTheScreen();
+    });
+
+    it('oferece os horários de intervalo do horarios.json, começando sem nenhum escolhido', () => {
+      montar();
+      const seletor = screen.getByLabelText('Horário');
+
+      expect(horarios).toEqual(['09:50', '12:00', '15:40', '18:30', '20:40']);
+      expect(seletor.props.items.map((opcao) => opcao.label)).toEqual(['Escolha um horário', ...horarios]);
+      expect(seletor.props.items.map((opcao) => opcao.value)).toEqual(['', ...horarios]);
+      expect(seletor.props.selectedIndex).toBe(0);
+    });
+
+    it('o contador diz por extenso quantos caracteres já foram para o leitor de tela', () => {
+      montar();
+
+      fireEvent.changeText(screen.getByLabelText('Observação (opcional)'), 'Sem cebola');
+
+      expect(screen.getByLabelText('10 de 140 caracteres')).toHaveTextContent('10/140');
     });
 
     it('conta os caracteres da observação', () => {
@@ -273,9 +295,24 @@ describe('Carrinho', () => {
 
       expect(screen.getByText('Pedido nº 42 recebido')).toBeOnTheScreen();
       expect(screen.getByText('Retire no balcão às 09:50')).toBeOnTheScreen();
+      expect(screen.getByText('Total: R$ 16,50')).toBeOnTheScreen();
+      expect(screen.getByText('Acompanhe o andamento em Meus pedidos.')).toBeOnTheScreen();
       expect(screen.queryByText('Coxinha de frango')).toBeNull();
       expect(screen.queryByText('Seu carrinho está vazio')).toBeNull();
       expect(screen.queryByRole('button', { name: 'Confirmar pedido' })).toBeNull();
+    });
+
+    it('pedido guardado só no aparelho aparece com o número, sem o prefixo', async () => {
+      criarPedido.mockImplementation(async (pedido) => ({
+        dados: { ...pedido, id: 'local-3', status: 'recebido', criadoEm: '2026-11-17T12:00:00.000Z' },
+        origem: 'local',
+      }));
+      montar();
+      escolherHorario('09:50');
+
+      confirmar();
+
+      expect(await screen.findByText('Pedido nº 3 recebido')).toBeOnTheScreen();
     });
 
     it('a confirmação leva para os pedidos ou de volta ao cardápio', async () => {
@@ -330,6 +367,19 @@ describe('Carrinho', () => {
       expect(screen.getByText('R$ 16,50')).toBeOnTheScreen();
       expect(screen.queryByText(/Pedido nº/)).toBeNull();
       expect(screen.getByRole('button', { name: 'Confirmar pedido' })).not.toBeBusy();
+    });
+
+    it('o aviso de erro some quando a tela perde o foco, e os itens ficam', async () => {
+      criarPedido.mockRejectedValue(new Error('Network Error'));
+      const { ouvintes } = montar();
+      escolherHorario('09:50');
+      confirmar();
+      await screen.findByText(/Não deu para enviar/);
+
+      act(() => ouvintes.blur());
+
+      expect(screen.queryByText(/Não deu para enviar/)).toBeNull();
+      expect(screen.getByText('Coxinha de frango')).toBeOnTheScreen();
     });
 
     it('tentar de novo reenvia o mesmo pedido', async () => {
