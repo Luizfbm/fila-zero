@@ -4,14 +4,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from '../Cartao';
 import Etiqueta from '../Etiqueta';
 import { cores } from '../../theme';
-import { formatarData, formatarMoeda } from '../../utils/formatar';
+import { formatarData, formatarMoeda, numeroDoPedido } from '../../utils/formatar';
 import { rotuloStatus, tomStatus } from '../../utils/statusPedido';
 import styles from './styles';
-
-// Pedido guardado só no aparelho tem id "local-1"; para quem lê, o número é 1.
-function numeroDoPedido(id) {
-  return String(id).replace(/^local-/, '');
-}
 
 export default function CartaoPedido({ pedido, status, aberto = false, aoAlternar }) {
   const itens = pedido.itens || [];
@@ -19,7 +14,9 @@ export default function CartaoPedido({ pedido, status, aberto = false, aoAlterna
   const observacao = pedido.observacao ? String(pedido.observacao).trim() : '';
   const data = formatarData(pedido.criadoEm);
   const numero = `Pedido nº ${numeroDoPedido(pedido.id)}`;
-  const legenda = data ? `${numero}, feito em ${data}` : numero;
+  // Na tela vai a versão curta, que cabe em uma linha no celular. O leitor de tela ouve a frase inteira.
+  const legenda = data ? `${numero}, ${data}` : numero;
+  const legendaFalada = data ? `${numero}, feito em ${data}` : numero;
   const apagado = status === 'retirado' ? styles.apagado : null;
 
   return (
@@ -37,7 +34,9 @@ export default function CartaoPedido({ pedido, status, aberto = false, aoAlterna
             {pedido.retirada ? (
               <Text style={[styles.retirada, apagado]}>Retirada às {pedido.retirada}</Text>
             ) : null}
-            <Text style={styles.legenda}>{legenda}</Text>
+            <Text style={styles.legenda} numberOfLines={1} accessibilityLabel={legendaFalada}>
+              {legenda}
+            </Text>
           </View>
           <Etiqueta texto={rotuloStatus(status)} tom={tomStatus(status)} />
         </View>

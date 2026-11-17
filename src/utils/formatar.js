@@ -77,3 +77,12 @@ export function mascararCep(texto) {
 
   return `${digitos.slice(0, 5)}-${digitos.slice(5)}`;
 }
+
+// Pedido guardado só no aparelho tem id "local-1"; para quem lê, o número é 1.
+export function numeroDoPedido(id) {
+  if (id === undefined || id === null) {
+    return '';
+  }
+
+  return String(id).replace(/^local-/, '');
+}

@@ -13,7 +13,7 @@ import { useUsuario } from '../../contexts/UsuarioContext';
 import horarios from '../../data/horarios.json';
 import { ROTAS } from '../../navigation/rotas';
 import { cores } from '../../theme';
-import { formatarMoeda } from '../../utils/formatar';
+import { formatarMoeda, numeroDoPedido } from '../../utils/formatar';
 import styles from './styles';
 
 const LIMITE_DA_OBSERVACAO = 140;
@@ -24,11 +24,6 @@ const opcoesDeHorario = [
   { rotulo: 'Escolha um horário', valor: '' },
   ...horarios.map((horario) => ({ rotulo: horario, valor: horario })),
 ];
-
-// O pedido guardado só no aparelho vem como "local-3"; para a pessoa, é o pedido 3.
-function numeroDoPedido(id) {
-  return String(id).replace('local-', '');
-}
 
 export default function Carrinho({ navigation }) {
   const { usuario } = useUsuario();

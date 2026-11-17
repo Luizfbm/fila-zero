@@ -63,7 +63,7 @@ describe('ItemCardapio', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Adicionar Coxinha de frango' }));
 
     expect(aoAdicionar).toHaveBeenCalledWith(coxinha);
-    expect(screen.queryByRole('button', { name: 'Aumentar quantidade' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Aumentar quantidade/ })).toBeNull();
   });
 
   it('no carrinho, troca o botão pelo controle de quantidade', () => {
@@ -72,10 +72,10 @@ describe('ItemCardapio', () => {
     expect(screen.queryByRole('button', { name: 'Adicionar Coxinha de frango' })).toBeNull();
     expect(screen.getByText('2')).toBeOnTheScreen();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade de Coxinha de frango' }));
     expect(aoAumentar).toHaveBeenCalledWith(coxinha);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha de frango' }));
     expect(aoDiminuir).toHaveBeenCalledWith(coxinha);
   });
 

@@ -246,12 +246,12 @@ describe('Cardapio', () => {
     fireEvent.press(screen.getByRole('button', { name: 'Adicionar Coxinha de frango' }));
     expect(screen.queryByRole('button', { name: 'Adicionar Coxinha de frango' })).toBeNull();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade de Coxinha de frango' }));
     expect(screen.getByText('2 itens')).toBeOnTheScreen();
     expect(screen.getByText('R$ 15,00')).toBeOnTheScreen();
 
-    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha de frango' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha de frango' }));
 
     expect(screen.getByRole('button', { name: 'Adicionar Coxinha de frango' })).toBeOnTheScreen();
     expect(screen.queryByText('Ver carrinho')).toBeNull();

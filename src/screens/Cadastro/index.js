@@ -118,9 +118,13 @@ export default function Cadastro() {
         if (!valendo) return;
         // CEP de cidade pequena vem sem rua e sem bairro. Só preencho o que veio,
         // para não apagar o que a pessoa já digitou.
+        const preenchidos = {};
         ['logradouro', 'bairro', 'cidade', 'uf'].forEach((campo) => {
-          if (endereco[campo]) formik.setFieldValue(campo, endereco[campo]);
+          if (endereco[campo]) preenchidos[campo] = endereco[campo];
         });
+        // Tudo de uma vez: com um setFieldValue por campo, cada validação enxergava
+        // só o próprio campo e o erro da cidade continuava na tela.
+        formik.setValues((atuais) => ({ ...atuais, ...preenchidos }));
       } catch (erro) {
         if (valendo) {
           setErroDoCep(erro.message);

@@ -67,8 +67,8 @@ describe('ItemCarrinho', () => {
   it('avisa o pai ao aumentar e ao diminuir', () => {
     const { aoAumentar, aoDiminuir, aoRemover } = montar(2);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade de Coxinha de frango' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha de frango' }));
 
     expect(aoAumentar).toHaveBeenCalledTimes(1);
     expect(aoDiminuir).toHaveBeenCalledTimes(1);

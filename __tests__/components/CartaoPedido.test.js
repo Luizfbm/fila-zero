@@ -43,9 +43,7 @@ describe('CartaoPedido', () => {
     montar();
 
     expect(screen.getByText('Retirada às 12:00')).toBeOnTheScreen();
-    expect(
-      screen.getByText(`Pedido nº 12, feito em ${formatarData(pedido.criadoEm)}`)
-    ).toBeOnTheScreen();
+    expect(screen.getByText(`Pedido nº 12, ${formatarData(pedido.criadoEm)}`)).toBeOnTheScreen();
     expect(screen.getByText('2x Coxinha, 1x Suco de laranja')).toBeOnTheScreen();
     expect(screen.getByText('R$ 20,00')).toBeOnTheScreen();
     expect(screen.getByText('Em preparo')).toBeOnTheScreen();
@@ -96,14 +94,14 @@ describe('CartaoPedido', () => {
   it('não quebra com pedido sem itens e sem horário de retirada', () => {
     montar({ pedido: { id: 3, total: 0, status: 'recebido', criadoEm: pedido.criadoEm }, status: 'recebido' });
 
-    expect(screen.getByText(/^Pedido nº 3, feito em/)).toBeOnTheScreen();
+    expect(screen.getByText(/^Pedido nº 3, \d{2}\//)).toBeOnTheScreen();
     expect(screen.queryByText(/Retirada/)).toBeNull();
   });
 
   it('mostra o número sem o prefixo do pedido guardado só no aparelho', () => {
     montar({ pedido: { ...pedido, id: 'local-1' } });
 
-    expect(screen.getByText(/^Pedido nº 1, feito em/)).toBeOnTheScreen();
+    expect(screen.getByText(/^Pedido nº 1, \d{2}\//)).toBeOnTheScreen();
     expect(screen.queryByText(/local-/)).toBeNull();
   });
 
@@ -119,6 +117,14 @@ describe('CartaoPedido', () => {
     montar({ pedido: { ...pedido, criadoEm: 'ontem' } });
 
     expect(screen.getByText('Pedido nº 12')).toBeOnTheScreen();
+  });
+
+  it('a legenda cabe em uma linha e o leitor de tela ouve a frase inteira', () => {
+    montar();
+    const data = formatarData(pedido.criadoEm);
+
+    expect(screen.getByText(`Pedido nº 12, ${data}`).props.numberOfLines).toBe(1);
+    expect(screen.getByLabelText(`Pedido nº 12, feito em ${data}`)).toBeOnTheScreen();
   });
 
   it('aberto, troca o resumo pela palavra Total ao lado do valor', () => {

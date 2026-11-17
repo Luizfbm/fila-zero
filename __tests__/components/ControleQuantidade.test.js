@@ -35,6 +35,26 @@ describe('ControleQuantidade', () => {
     expect(aoAumentar).toHaveBeenCalledTimes(1);
   });
 
+  it('com o nome do produto, os botões dizem de qual item é a quantidade', () => {
+    const aoDiminuir = jest.fn();
+    const aoAumentar = jest.fn();
+    render(
+      <ControleQuantidade
+        valor={2}
+        nome="Coxinha"
+        aoDiminuir={aoDiminuir}
+        aoAumentar={aoAumentar}
+      />
+    );
+
+    fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha' }));
+    fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade de Coxinha' }));
+
+    expect(aoDiminuir).toHaveBeenCalledTimes(1);
+    expect(aoAumentar).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Aumentar quantidade' })).toBeNull();
+  });
+
   it('os dois botões têm 48 de lado, como o Botao', () => {
     render(
       <ControleQuantidade valor={1} aoDiminuir={jest.fn()} aoAumentar={jest.fn()} />
