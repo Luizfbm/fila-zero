@@ -1,4 +1,5 @@
 import React from 'react';
+import { KeyboardAvoidingView } from 'react-native';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import Cadastro from '../../src/screens/Cadastro';
 import { buscarCep } from '../../src/services/cep';
@@ -8,6 +9,9 @@ import { useUsuario } from '../../src/contexts/UsuarioContext';
 jest.mock('../../src/services/cep', () => ({ buscarCep: jest.fn() }));
 jest.mock('../../src/services/usuarios', () => ({ cadastrarUsuario: jest.fn() }));
 jest.mock('../../src/contexts/UsuarioContext', () => ({ useUsuario: jest.fn() }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 24, bottom: 0, left: 0, right: 0 }),
+}));
 
 const ENDERECO = {
   logradouro: 'Rua Sete de Setembro',
@@ -47,7 +51,7 @@ async function preencherTudo() {
   digitar('CEP', '29100000');
   await waitFor(() => expect(screen.getByLabelText('Cidade').props.value).toBe('Vila Velha'));
   digitar('Senha', 'abc123');
-  digitar('Confirmar senha', 'abc123');
+  digitar('Repita a senha', 'abc123');
 }
 
 beforeEach(() => {
@@ -70,6 +74,7 @@ describe('Cadastro', () => {
     ).toBeOnTheScreen();
     expect(screen.getByText('Seus dados')).toBeOnTheScreen();
     expect(screen.getByText('Endereço')).toBeOnTheScreen();
+    expect(screen.getByText('Acesso')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Criar conta' })).toBeOnTheScreen();
   });
 
@@ -92,7 +97,7 @@ describe('Cadastro', () => {
     expect(screen.getByText('Informe a cidade')).toBeOnTheScreen();
     expect(screen.getByText('Informe a UF')).toBeOnTheScreen();
     expect(screen.getByText('Crie uma senha')).toBeOnTheScreen();
-    expect(screen.getByText('Faltam 8 campos para corrigir.')).toBeOnTheScreen();
+    expect(screen.getByText('Corrija os 8 campos marcados em vermelho.')).toBeOnTheScreen();
     expect(cadastrarUsuario).not.toHaveBeenCalled();
   });
 
@@ -103,7 +108,7 @@ describe('Cadastro', () => {
 
     expect(await screen.findByText('Informe seu e-mail')).toBeOnTheScreen();
     expect(screen.queryByText('Informe nome e sobrenome')).toBeNull();
-    expect(screen.queryByText(/para corrigir/)).toBeNull();
+    expect(screen.queryByText(/em vermelho/)).toBeNull();
   });
 
   it('o erro some quando a pessoa corrige o campo', async () => {
@@ -111,10 +116,13 @@ describe('Cadastro', () => {
     enviar();
     await screen.findByText('Informe nome e sobrenome');
 
-    digitar('Nome completo', 'Luiz Miranda');
+    // O formik valida fora do evento, então espero dentro do act em vez de contar tempo.
+    await act(async () => {
+      digitar('Nome completo', 'Luiz Miranda');
+    });
 
-    await waitFor(() => expect(screen.queryByText('Informe nome e sobrenome')).toBeNull());
-    expect(screen.getByText('Faltam 7 campos para corrigir.')).toBeOnTheScreen();
+    expect(await screen.findByText('Corrija os 7 campos marcados em vermelho.')).toBeOnTheScreen();
+    expect(screen.queryByText('Informe nome e sobrenome')).toBeNull();
   });
 
   it('avisa no singular quando falta um campo só', async () => {
@@ -124,7 +132,7 @@ describe('Cadastro', () => {
 
     enviar();
 
-    expect(await screen.findByText('Falta 1 campo para corrigir.')).toBeOnTheScreen();
+    expect(await screen.findByText('Corrija o campo marcado em vermelho.')).toBeOnTheScreen();
   });
 
   it('coloca a máscara no CEP enquanto a pessoa digita', async () => {
@@ -149,9 +157,9 @@ describe('Cadastro', () => {
     await act(async () => busca.resolver(ENDERECO));
 
     await waitFor(() =>
-      expect(screen.getByLabelText('Logradouro').props.value).toBe('Rua Sete de Setembro')
+      expect(screen.getByLabelText('Rua (opcional)').props.value).toBe('Rua Sete de Setembro')
     );
-    expect(screen.getByLabelText('Bairro').props.value).toBe('Centro');
+    expect(screen.getByLabelText('Bairro (opcional)').props.value).toBe('Centro');
     expect(screen.getByLabelText('Cidade').props.value).toBe('Vila Velha');
     expect(screen.getByLabelText('UF').props.value).toBe('ES');
     expect(screen.queryByText('Buscando endereço')).toBeNull();
@@ -162,11 +170,11 @@ describe('Cadastro', () => {
   it('deixa a pessoa editar o endereço que veio do CEP', async () => {
     render(<Cadastro />);
     digitar('CEP', '29100000');
-    await waitFor(() => expect(screen.getByLabelText('Bairro').props.value).toBe('Centro'));
+    await waitFor(() => expect(screen.getByLabelText('Bairro (opcional)').props.value).toBe('Centro'));
 
-    digitar('Bairro', 'Praia da Costa');
+    digitar('Bairro (opcional)', 'Praia da Costa');
 
-    await waitFor(() => expect(screen.getByLabelText('Bairro').props.value).toBe('Praia da Costa'));
+    await waitFor(() => expect(screen.getByLabelText('Bairro (opcional)').props.value).toBe('Praia da Costa'));
     expect(buscarCep).toHaveBeenCalledTimes(1);
   });
 
@@ -218,7 +226,7 @@ describe('Cadastro', () => {
     render(<Cadastro />);
 
     expect(screen.getByLabelText('Senha').props.secureTextEntry).toBe(true);
-    expect(screen.getByLabelText('Confirmar senha').props.secureTextEntry).toBe(true);
+    expect(screen.getByLabelText('Repita a senha').props.secureTextEntry).toBe(true);
 
     fireEvent.press(screen.getAllByRole('button', { name: 'Mostrar senha' })[0]);
 
@@ -251,7 +259,7 @@ describe('Cadastro', () => {
       nome: 'Luiz Miranda',
       email: 'luiz@faculdade.br',
     });
-    expect(screen.queryByText(/para corrigir/)).toBeNull();
+    expect(screen.queryByText(/em vermelho/)).toBeNull();
   });
 
   it('deixa o botão em carregando enquanto o cadastro é enviado', async () => {
@@ -289,5 +297,146 @@ describe('Cadastro', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Criar conta' })).not.toBeBusy()
     );
+  });
+  it('aceita CEP colado com ponto e traço', async () => {
+    render(<Cadastro />);
+    // Com limite de caracteres o campo cortaria o texto colado antes de a máscara agir.
+    expect(screen.getByLabelText('CEP').props.maxLength).toBeUndefined();
+
+    digitar('CEP', '29.100-000');
+
+    await waitFor(() => expect(screen.getByLabelText('Cidade').props.value).toBe('Vila Velha'));
+    expect(screen.getByLabelText('CEP').props.value).toBe('29100-000');
+    expect(buscarCep).toHaveBeenCalledWith('29100000');
+  });
+
+  it('troca a dica do CEP pelo aviso de busca sem criar uma linha nova', async () => {
+    const busca = promessaPendente();
+    buscarCep.mockReturnValue(busca.promessa);
+    render(<Cadastro />);
+    const dica = 'Com o CEP, a gente preenche rua, bairro, cidade e UF.';
+    expect(screen.getByText(dica)).toBeOnTheScreen();
+
+    digitar('CEP', '29100000');
+
+    expect(await screen.findByText('Buscando endereço')).toBeOnTheScreen();
+    expect(screen.queryByText(dica)).toBeNull();
+
+    await act(async () => busca.resolver(ENDERECO));
+
+    expect(await screen.findByText(dica)).toBeOnTheScreen();
+  });
+
+  it('não apaga a rua e o bairro digitados quando o CEP vem sem eles', async () => {
+    buscarCep.mockResolvedValue({ logradouro: '', bairro: '', cidade: 'Marechal Floriano', uf: 'ES' });
+    render(<Cadastro />);
+    digitar('Rua (opcional)', 'Rua das Flores');
+    digitar('Bairro (opcional)', 'Centro');
+
+    digitar('CEP', '29255000');
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('Cidade').props.value).toBe('Marechal Floriano')
+    );
+    expect(screen.getByLabelText('Rua (opcional)').props.value).toBe('Rua das Flores');
+    expect(screen.getByLabelText('Bairro (opcional)').props.value).toBe('Centro');
+  });
+
+  it('ignora a resposta de um CEP que a pessoa já trocou', async () => {
+    const antiga = promessaPendente();
+    buscarCep.mockImplementation((cep) =>
+      cep === '29100000'
+        ? antiga.promessa
+        : Promise.resolve({ logradouro: 'Praça da Sé', bairro: 'Sé', cidade: 'São Paulo', uf: 'SP' })
+    );
+    render(<Cadastro />);
+
+    digitar('CEP', '29100000');
+    await screen.findByText('Buscando endereço');
+    digitar('CEP', '01001000');
+    await waitFor(() => expect(screen.getByLabelText('Cidade').props.value).toBe('São Paulo'));
+
+    await act(async () => antiga.resolver(ENDERECO));
+
+    expect(screen.getByLabelText('Cidade').props.value).toBe('São Paulo');
+    expect(screen.getByLabelText('UF').props.value).toBe('SP');
+    expect(screen.getByLabelText('Rua (opcional)').props.value).toBe('Praça da Sé');
+    expect(screen.queryByText('Buscando endereço')).toBeNull();
+    expect(buscarCep).toHaveBeenCalledTimes(2);
+  });
+
+  it('não envia enquanto o CEP for um que não existe', async () => {
+    render(<Cadastro />);
+    await preencherTudo();
+    buscarCep.mockRejectedValue(new Error('CEP não encontrado. Confira os números.'));
+    digitar('CEP', '99999999');
+    await screen.findByText('CEP não encontrado. Confira os números.');
+
+    enviar();
+
+    expect(await screen.findByText('Corrija o campo marcado em vermelho.')).toBeOnTheScreen();
+    expect(screen.getByText('CEP não encontrado. Confira os números.')).toBeOnTheScreen();
+    expect(cadastrarUsuario).not.toHaveBeenCalled();
+
+    buscarCep.mockResolvedValue(ENDERECO);
+    await act(async () => {
+      digitar('CEP', '29100000');
+    });
+    await waitFor(() => expect(screen.queryByText(/em vermelho/)).toBeNull());
+    enviar();
+
+    await waitFor(() => expect(entrar).toHaveBeenCalledTimes(1));
+  });
+
+  it('deixa enviar quando a consulta do CEP falha por causa da rede', async () => {
+    const semRede = 'Não deu para consultar o CEP agora. Verifique a conexão e tente de novo.';
+    render(<Cadastro />);
+    await preencherTudo();
+    buscarCep.mockRejectedValue(new Error(semRede));
+    digitar('CEP', '29101000');
+    await screen.findByText(semRede);
+
+    enviar();
+
+    await waitFor(() => expect(entrar).toHaveBeenCalledTimes(1));
+    expect(cadastrarUsuario).toHaveBeenCalledWith(expect.objectContaining({ cep: '29101-000' }));
+  });
+
+  it('envia pelo Enter do último campo, uma vez só', async () => {
+    const envio = promessaPendente();
+    cadastrarUsuario.mockReturnValue(envio.promessa);
+    render(<Cadastro />);
+    await preencherTudo();
+    const ultimo = screen.getByLabelText('Repita a senha');
+    expect(ultimo.props.returnKeyType).toBe('done');
+
+    fireEvent(ultimo, 'submitEditing');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Criar conta' })).toBeBusy()
+    );
+    fireEvent(ultimo, 'submitEditing');
+
+    await act(async () => envio.resolver({ dados: { id: '1' }, origem: 'local' }));
+
+    await waitFor(() => expect(entrar).toHaveBeenCalledTimes(1));
+    expect(cadastrarUsuario).toHaveBeenCalledTimes(1);
+  });
+
+  it('abre espaço para o teclado nas duas plataformas, descontando o cabeçalho', () => {
+    render(<Cadastro />);
+
+    const { behavior, keyboardVerticalOffset } = screen.UNSAFE_getByType(KeyboardAvoidingView).props;
+
+    expect(behavior).toBe('padding');
+    expect(keyboardVerticalOffset).toBeGreaterThan(24);
+  });
+
+  it('o seletor de curso começa em "Selecione"', () => {
+    render(<Cadastro />);
+
+    const opcoes = screen.getByLabelText('Curso').props.items.map((item) => item.label);
+
+    expect(opcoes[0]).toBe('Selecione');
+    expect(opcoes).not.toContain('Escolha seu curso');
   });
 });
