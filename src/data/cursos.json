@@ -1,0 +1,13 @@
+[
+  { "id": "administracao", "nome": "Administração" },
+  { "id": "ads", "nome": "Análise e Desenvolvimento de Sistemas" },
+  { "id": "arquitetura", "nome": "Arquitetura e Urbanismo" },
+  { "id": "ciencia-computacao", "nome": "Ciência da Computação" },
+  { "id": "ciencias-contabeis", "nome": "Ciências Contábeis" },
+  { "id": "direito", "nome": "Direito" },
+  { "id": "enfermagem", "nome": "Enfermagem" },
+  { "id": "engenharia-civil", "nome": "Engenharia Civil" },
+  { "id": "engenharia-software", "nome": "Engenharia de Software" },
+  { "id": "psicologia", "nome": "Psicologia" },
+  { "id": "sistemas-informacao", "nome": "Sistemas de Informação" }
+]
