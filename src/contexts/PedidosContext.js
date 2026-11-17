@@ -59,7 +59,7 @@ export function PedidosProvider({ children }) {
     return resposta.dados;
   }
 
-  const pedidos = usuario ? estado.pedidos.filter((pedido) => pedido.usuarioId === usuario.id) : [];
+  const pedidos = usuario ? estado.pedidos.filter((pedido) => String(pedido.usuarioId) === String(usuario.id)) : [];
 
   return (
     <PedidosContext.Provider
