@@ -24,17 +24,25 @@ export default StyleSheet.create({
     marginBottom: espacos.md,
   },
   seletor: {
-    marginBottom: espacos.sm,
+    marginBottom: 0,
+  },
+  linhaDoContador: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: espacos.sm,
   },
   contador: {
     ...fontes.legenda,
+    flex: 1,
   },
   lista: {
     flex: 1,
   },
   conteudoDaLista: {
     ...coluna,
-    padding: espacos.md,
+    paddingHorizontal: espacos.md,
+    paddingTop: espacos.sm,
     paddingBottom: espacos.xl,
   },
   separador: {

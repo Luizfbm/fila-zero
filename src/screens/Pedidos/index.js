@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import Aviso from '../../components/Aviso';
+import Botao from '../../components/Botao';
 import Carregando from '../../components/Carregando';
 import CartaoPedido from '../../components/CartaoPedido';
 import EstadoVazio from '../../components/EstadoVazio';
@@ -40,11 +41,9 @@ export default function Pedidos({ navigation }) {
     return Promise.resolve();
   }
 
+  // O Drawer emite focus também na primeira exibição, então não precisa buscar na montagem.
   useEffect(() => {
-    buscar();
-    const pararDeOuvir = navigation.addListener('focus', () => {
-      buscar();
-    });
+    const pararDeOuvir = navigation.addListener('focus', buscar);
     return pararDeOuvir;
   }, [navigation, usuarioId]);
 
@@ -77,6 +76,11 @@ export default function Pedidos({ navigation }) {
     .map((pedido) => ({ pedido, status: statusAtual(pedido, agora) }));
   const visiveis = filtro === TODOS ? comStatus : comStatus.filter((linha) => linha.status === filtro);
   const temPedidos = pedidos.length > 0;
+  const palavra = pedidos.length === 1 ? 'pedido' : 'pedidos';
+  const contador =
+    filtro === TODOS
+      ? `${pedidos.length} ${palavra}`
+      : `${visiveis.length} de ${pedidos.length} ${palavra}`;
 
   function vazio() {
     // Com erro e sem lista, o aviso já explica: dizer que não há pedidos seria mentira.
@@ -99,7 +103,7 @@ export default function Pedidos({ navigation }) {
       <EstadoVazio
         icone="receipt-text-outline"
         titulo="Você ainda não fez nenhum pedido"
-        mensagem="Quando você pedir alguma coisa na cantina, o pedido aparece aqui."
+        mensagem="Os pedidos que você fizer pelo app aparecem aqui."
         acao={{ titulo: 'Ver cardápio', onPress: () => navigation.navigate(ROTAS.CARDAPIO) }}
       />
     );
@@ -126,11 +130,15 @@ export default function Pedidos({ navigation }) {
                 opcoes={OPCOES_DE_STATUS}
                 style={styles.seletor}
               />
-              {visiveis.length > 0 ? (
-                <Text style={styles.contador}>
-                  {visiveis.length === 1 ? '1 pedido' : `${visiveis.length} pedidos`}
-                </Text>
-              ) : null}
+              <View style={styles.linhaDoContador}>
+                <Text style={styles.contador}>{contador}</Text>
+                <Botao
+                  titulo="Atualizar"
+                  variante="texto"
+                  carregando={carregando}
+                  onPress={buscar}
+                />
+              </View>
             </View>
           ) : null}
         </View>
