@@ -1,6 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { cores, espacos, fontes, raios } from '../../theme';
 
+// Em tela larga (web) o resumo fica numa coluna no meio.
+const LARGURA_MAXIMA = 720;
+const TAMANHO_POSICAO = 24;
+// Cabe "R$ 1.234,56" sem empurrar o nome do item.
+const LARGURA_VALOR = 88;
+
 export default StyleSheet.create({
   tela: {
     flex: 1,
@@ -15,10 +21,9 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Em tela larga (web) o resumo fica numa coluna de até 720 px no meio.
   conteudo: {
     width: '100%',
-    maxWidth: espacos.lg * 30,
+    maxWidth: LARGURA_MAXIMA,
     alignSelf: 'center',
     padding: espacos.md,
   },
@@ -71,9 +76,9 @@ export default StyleSheet.create({
     fontWeight: '700',
     color: cores.primariaEscura,
     backgroundColor: cores.primariaClara,
-    width: espacos.lg,
-    height: espacos.lg,
-    lineHeight: espacos.lg,
+    width: TAMANHO_POSICAO,
+    height: TAMANHO_POSICAO,
+    lineHeight: TAMANHO_POSICAO,
     borderRadius: raios.pilula,
     textAlign: 'center',
     overflow: 'hidden',
@@ -88,7 +93,7 @@ export default StyleSheet.create({
   itemValor: {
     ...fontes.corpo,
     fontWeight: '600',
-    minWidth: espacos.xl * 2 + espacos.sm,
+    minWidth: LARGURA_VALOR,
     textAlign: 'right',
   },
 });

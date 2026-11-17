@@ -1,6 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { cores, espacos, fontes, raios, sombra } from '../../theme';
 
+export const TAMANHO_ICONE = 18;
+
+// Dois indicadores lado a lado ficam da mesma altura mesmo quando um deles tem duas linhas.
+const ALTURA_MINIMA = 96;
+
 export default StyleSheet.create({
   indicador: {
     ...sombra,
@@ -10,8 +15,7 @@ export default StyleSheet.create({
     borderWidth: 1,
     borderColor: cores.borda,
     padding: espacos.md,
-    // Dois indicadores lado a lado ficam da mesma altura mesmo quando um valor quebra em duas linhas.
-    minHeight: espacos.xl * 3,
+    minHeight: ALTURA_MINIMA,
   },
   topo: {
     flexDirection: 'row',
@@ -25,8 +29,14 @@ export default StyleSheet.create({
     flex: 1,
   },
   valor: {
-    ...fontes.titulo,
-    fontSize: fontes.subtitulo.fontSize + espacos.xs,
-    lineHeight: espacos.lg + espacos.xs,
+    ...fontes.subtitulo,
+  },
+  valorEmTexto: {
+    ...fontes.corpo,
+    fontWeight: '600',
+  },
+  detalhe: {
+    ...fontes.legenda,
+    marginTop: espacos.xs,
   },
 });

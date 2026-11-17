@@ -16,11 +16,17 @@ import { filtrarPorPeriodo, gastoPorCategoria, itensMaisPedidos, resumir } from 
 import styles from './styles';
 
 const PERIODOS = [
-  { rotulo: 'Tudo', valor: 'tudo' },
+  { rotulo: 'Desde o começo', valor: 'tudo' },
   { rotulo: 'Hoje', valor: 'hoje' },
   { rotulo: 'Últimos 7 dias', valor: '7dias' },
   { rotulo: 'Últimos 30 dias', valor: '30dias' },
 ];
+
+const SEM_PEDIDOS_NO_PERIODO = {
+  hoje: 'Você não pediu nada hoje',
+  '7dias': 'Você não pediu nada nos últimos 7 dias',
+  '30dias': 'Você não pediu nada nos últimos 30 dias',
+};
 
 function unidades(quantidade) {
   return quantidade === 1 ? '1 unidade' : `${quantidade} unidades`;
@@ -62,27 +68,15 @@ export default function Painel({ navigation }) {
     };
   }, []);
 
+  // O Drawer emite "focus" na primeira vez que a tela aparece e toda vez que ela volta,
+  // então a busca dos pedidos fica só aqui.
   useEffect(() => {
-    buscarPedidos();
-    setBuscou(true);
-
-    // O Drawer avisa do foco no mesmo instante em que a tela abre.
-    // Esse primeiro aviso é ignorado para não buscar os pedidos duas vezes.
-    let acabouDeAbrir = true;
-    const espera = setTimeout(() => {
-      acabouDeAbrir = false;
-    }, 0);
-
     const pararDeOuvir = navigation.addListener('focus', () => {
-      if (!acabouDeAbrir) {
-        buscarPedidos();
-      }
+      buscarPedidos();
+      setBuscou(true);
     });
 
-    return () => {
-      clearTimeout(espera);
-      pararDeOuvir();
-    };
+    return pararDeOuvir;
   }, [navigation, usuarioId]);
 
   const semPedidos = pedidos.length === 0;
@@ -126,10 +120,11 @@ export default function Painel({ navigation }) {
   const indicadores = [
     { rotulo: 'Total gasto', valor: formatarMoeda(resumo.totalGasto), icone: 'cash-multiple' },
     { rotulo: 'Pedidos', valor: String(resumo.quantidadePedidos), icone: 'receipt-text-outline' },
-    { rotulo: 'Ticket médio', valor: formatarMoeda(resumo.ticketMedio), icone: 'calculator-variant-outline' },
+    { rotulo: 'Média por pedido', valor: formatarMoeda(resumo.ticketMedio), icone: 'calculator-variant-outline' },
     {
-      rotulo: 'Mais pedido',
+      rotulo: 'Seu preferido',
       valor: resumo.itemMaisPedido ? resumo.itemMaisPedido.nome : 'Nenhum ainda',
+      detalhe: resumo.itemMaisPedido ? unidades(resumo.itemMaisPedido.quantidade) : undefined,
       icone: 'star-outline',
     },
   ];
@@ -150,7 +145,7 @@ export default function Painel({ navigation }) {
 
         {doPeriodo.length === 0 ? (
           <Cartao style={styles.semPeriodo}>
-            <Text style={styles.semPeriodoTitulo}>Nenhum pedido neste período.</Text>
+            <Text style={styles.semPeriodoTitulo}>{SEM_PEDIDOS_NO_PERIODO[periodo]}</Text>
             <Text style={styles.semPeriodoTexto}>Escolha outro período para ver seus gastos.</Text>
           </Cartao>
         ) : (
@@ -158,7 +153,12 @@ export default function Painel({ navigation }) {
             <View style={styles.grade}>
               {indicadores.map((indicador) => (
                 <View key={indicador.rotulo} style={styles.celula}>
-                  <Indicador rotulo={indicador.rotulo} valor={indicador.valor} icone={indicador.icone} />
+                  <Indicador
+                    rotulo={indicador.rotulo}
+                    valor={indicador.valor}
+                    icone={indicador.icone}
+                    detalhe={indicador.detalhe}
+                  />
                 </View>
               ))}
             </View>
@@ -190,7 +190,7 @@ export default function Painel({ navigation }) {
                 <Cartao>
                   {maisPedidos.map((item, indice) => (
                     <View
-                      key={item.nome}
+                      key={String(item.produtoId !== undefined && item.produtoId !== null ? item.produtoId : item.nome)}
                       style={[styles.item, indice > 0 && styles.itemComDivisor]}
                       accessible
                       accessibilityLabel={`${indice + 1}º ${item.nome}, ${unidades(item.quantidade)}, ${formatarMoeda(item.valor)}`}
@@ -199,7 +199,7 @@ export default function Painel({ navigation }) {
                       <Text style={styles.itemNome} numberOfLines={2}>
                         {item.nome}
                       </Text>
-                      <Text style={styles.itemQuantidade}>{`${item.quantidade} un.`}</Text>
+                      <Text style={styles.itemQuantidade}>{`${item.quantidade}x`}</Text>
                       <Text style={styles.itemValor}>{formatarMoeda(item.valor)}</Text>
                     </View>
                   ))}

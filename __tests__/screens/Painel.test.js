@@ -106,9 +106,10 @@ describe('Painel: busca dos pedidos', () => {
     expect(carregar).toHaveBeenCalledWith('7');
   });
 
-  it('não busca por conta própria na montagem, só pelo foco', () => {
+  it('não busca por conta própria na montagem, só pelo foco', async () => {
     comPedidos({ pedidos: [] });
     render(<Painel navigation={navigation} />);
+    await act(async () => {});
 
     expect(carregar).not.toHaveBeenCalled();
     expect(screen.getByText('Carregando seus pedidos...')).toBeOnTheScreen();
