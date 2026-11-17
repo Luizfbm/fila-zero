@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import CartaoPedido from '../../src/components/CartaoPedido';
 import { formatarData } from '../../src/utils/formatar';
+import { cores } from '../../src/theme';
 
 const pedido = {
   id: 12,
@@ -35,9 +36,10 @@ describe('CartaoPedido', () => {
   it('mostra número, data, retirada, resumo, total e status', () => {
     montar();
 
-    expect(screen.getByText('Pedido nº 12')).toBeOnTheScreen();
-    expect(screen.getByText(formatarData(pedido.criadoEm))).toBeOnTheScreen();
     expect(screen.getByText('Retirada às 12:00')).toBeOnTheScreen();
+    expect(
+      screen.getByText(`Pedido nº 12, feito em ${formatarData(pedido.criadoEm)}`)
+    ).toBeOnTheScreen();
     expect(screen.getByText('2x Coxinha, 1x Suco de laranja')).toBeOnTheScreen();
     expect(screen.getByText('R$ 20,00')).toBeOnTheScreen();
     expect(screen.getByText('Em preparo')).toBeOnTheScreen();
@@ -88,7 +90,74 @@ describe('CartaoPedido', () => {
   it('não quebra com pedido sem itens e sem horário de retirada', () => {
     montar({ pedido: { id: 3, total: 0, status: 'recebido', criadoEm: pedido.criadoEm }, status: 'recebido' });
 
-    expect(screen.getByText('Pedido nº 3')).toBeOnTheScreen();
+    expect(screen.getByText(/^Pedido nº 3, feito em/)).toBeOnTheScreen();
     expect(screen.queryByText(/Retirada/)).toBeNull();
+  });
+
+  it('mostra o número sem o prefixo do pedido guardado só no aparelho', () => {
+    montar({ pedido: { ...pedido, id: 'local-1' } });
+
+    expect(screen.getByText(/^Pedido nº 1, feito em/)).toBeOnTheScreen();
+    expect(screen.queryByText(/local-/)).toBeNull();
+  });
+
+  it('avisa o pai com o id inteiro, com prefixo e tudo', () => {
+    const aoAlternar = montar({ pedido: { ...pedido, id: 'local-1' } });
+
+    fireEvent.press(screen.getByRole('button'));
+
+    expect(aoAlternar).toHaveBeenCalledWith('local-1');
+  });
+
+  it('mostra só o número quando a data do pedido não dá para ler', () => {
+    montar({ pedido: { ...pedido, criadoEm: 'ontem' } });
+
+    expect(screen.getByText('Pedido nº 12')).toBeOnTheScreen();
+  });
+
+  it('aberto, troca o resumo pela palavra Total ao lado do valor', () => {
+    montar({ aberto: true });
+
+    expect(screen.queryByText('2x Coxinha, 1x Suco de laranja')).toBeNull();
+    expect(screen.getByText('Total')).toBeOnTheScreen();
+    expect(screen.getByText('R$ 20,00')).toBeOnTheScreen();
+  });
+
+  it('diz no hint o que o toque faz', () => {
+    montar();
+    expect(screen.getByHintText('Mostra os itens do pedido')).toBeOnTheScreen();
+
+    screen.unmount();
+    montar({ aberto: true });
+    expect(screen.getByHintText('Esconde os itens do pedido')).toBeOnTheScreen();
+  });
+
+  it('pedido retirado fica com o texto apagado', () => {
+    montar({ status: 'retirado' });
+
+    expect(screen.getByText('Retirada às 12:00')).toHaveStyle({ color: cores.textoSuave });
+    expect(screen.getByText('R$ 20,00')).toHaveStyle({ color: cores.textoSuave });
+  });
+
+  it('pedido em andamento fica com o texto na cor normal', () => {
+    montar();
+
+    expect(screen.getByText('Retirada às 12:00')).toHaveStyle({ color: cores.texto });
+  });
+
+  it('pedido pronto ganha a borda na cor de sucesso', () => {
+    montar({ status: 'pronto' });
+
+    expect(screen.getByTestId('cartao-pedido-12').children[0]).toHaveStyle({
+      borderColor: cores.sucesso,
+    });
+  });
+
+  it('os outros status ficam com a borda comum', () => {
+    montar();
+
+    expect(screen.getByTestId('cartao-pedido-12').children[0]).toHaveStyle({
+      borderColor: cores.borda,
+    });
   });
 });
