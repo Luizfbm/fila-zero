@@ -14,7 +14,7 @@ function validarEmail(email) {
   if (!email) {
     return 'Informe seu e-mail';
   }
-  return FORMATO_EMAIL.test(email) ? null : 'Esse e-mail não parece válido';
+  return FORMATO_EMAIL.test(email) ? null : 'Confira o e-mail, ele precisa ser no formato nome@exemplo.com';
 }
 
 function validarMatricula(matricula) {
@@ -22,16 +22,16 @@ function validarMatricula(matricula) {
     return 'Informe sua matrícula';
   }
   if (!/^\d+$/.test(matricula)) {
-    return 'A matrícula só tem números';
+    return 'Digite só os números da matrícula';
   }
-  return matricula.length < 6 || matricula.length > 10 ? 'A matrícula tem de 6 a 10 dígitos' : null;
+  return matricula.length < 6 || matricula.length > 10 ? 'A matrícula precisa ter de 6 a 10 números' : null;
 }
 
 function validarCep(cep) {
   if (!cep) {
     return 'Informe o CEP';
   }
-  return somenteDigitos(cep).length === 8 ? null : 'O CEP tem 8 dígitos';
+  return somenteDigitos(cep).length === 8 ? null : 'O CEP precisa ter 8 números';
 }
 
 function validarSenha(senha) {
@@ -41,7 +41,7 @@ function validarSenha(senha) {
   if (senha.length < 6) {
     return 'A senha precisa ter pelo menos 6 caracteres';
   }
-  return /[a-zA-ZÀ-ÿ]/.test(senha) && /\d/.test(senha) ? null : 'A senha precisa ter letra e número';
+  return /[a-zA-ZÀ-ÿ]/.test(senha) && /\d/.test(senha) ? null : 'A senha precisa ter pelo menos uma letra e um número';
 }
 
 function validarConfirmacao(senha, confirmarSenha) {

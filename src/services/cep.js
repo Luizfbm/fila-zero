@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { somenteDigitos } from '../utils/formatar';
 
-const CEP_INCOMPLETO = 'O CEP tem 8 dígitos';
+const CEP_INCOMPLETO = 'O CEP precisa ter 8 números';
 const CEP_INEXISTENTE = 'CEP não encontrado. Confira os números.';
 const FALHA_NA_CONSULTA = 'Não deu para consultar o CEP agora. Verifique a conexão e tente de novo.';
 
