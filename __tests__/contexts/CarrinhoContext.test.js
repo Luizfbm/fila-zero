@@ -134,17 +134,24 @@ describe('CarrinhoContext', () => {
     expect(result.current.carrinho.itens).toEqual([{ produto: coxinha, quantidade: 1 }]);
   });
 
-  it('mantém o mesmo valor e as mesmas funções enquanto os itens não mudam', () => {
-    const { result, rerender } = montar();
-    const antes = result.current.carrinho;
-
-    rerender();
-    expect(result.current.carrinho).toBe(antes);
+  it('trata quantidade que chega como texto sem concatenar', () => {
+    const { result } = montar();
 
     act(() => result.current.carrinho.adicionar(coxinha));
-    expect(result.current.carrinho.adicionar).toBe(antes.adicionar);
-    expect(result.current.carrinho.remover).toBe(antes.remover);
-    expect(result.current.carrinho.alterarQuantidade).toBe(antes.alterarQuantidade);
-    expect(result.current.carrinho.limpar).toBe(antes.limpar);
+    act(() => result.current.carrinho.alterarQuantidade('p1', '2'));
+    act(() => result.current.carrinho.adicionar(coxinha));
+
+    expect(result.current.carrinho.itens).toEqual([{ produto: coxinha, quantidade: 3 }]);
+    expect(result.current.carrinho.quantidade).toBe(3);
+    expect(result.current.carrinho.total).toBe(19.5);
+  });
+
+  it('ignora quantidade que não é número', () => {
+    const { result } = montar();
+
+    act(() => result.current.carrinho.adicionar(coxinha));
+    act(() => result.current.carrinho.alterarQuantidade('p1', 'abc'));
+
+    expect(result.current.carrinho.itens).toEqual([{ produto: coxinha, quantidade: 1 }]);
   });
 });

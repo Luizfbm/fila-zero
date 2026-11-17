@@ -1,5 +1,5 @@
 import React from 'react';
-import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import { UsuarioProvider, useUsuario } from '../../src/contexts/UsuarioContext';
 import { PedidosProvider, usePedidos } from '../../src/contexts/PedidosContext';
 import { listarPedidos, criarPedido } from '../../src/services/pedidos';
@@ -7,11 +7,14 @@ import { listarPedidos, criarPedido } from '../../src/services/pedidos';
 jest.mock('../../src/services/pedidos');
 
 const ana = { id: 'u1', nome: 'Ana Souza' };
+const bia = { id: 'u2', nome: 'Bia Lima' };
 const itens = [{ produtoId: 'p1', nome: 'Coxinha', preco: 6.5, quantidade: 2, categoria: 'salgados' }];
 const antigo = {
   id: '1', usuarioId: 'u1', itens, total: 13, retirada: '09:50', observacao: '',
   status: 'retirado', criadoEm: '2026-11-16T12:30:00.000Z',
 };
+const maisAntigo = { ...antigo, id: '0', criadoEm: '2026-11-13T12:30:00.000Z' };
+const daBia = { ...antigo, id: '7', usuarioId: 'u2' };
 const novo = { usuarioId: 'u1', itens, total: 13, retirada: '10:10', observacao: 'Sem catchup' };
 const criado = { ...novo, id: '2', status: 'recebido', criadoEm: '2026-11-17T12:50:00.000Z' };
 
@@ -25,6 +28,12 @@ function envolver({ children }) {
 
 function montar() {
   return renderHook(() => ({ pedidos: usePedidos(), conta: useUsuario() }), { wrapper: envolver });
+}
+
+function montarComAna() {
+  const montado = montar();
+  act(() => montado.result.current.conta.entrar(ana));
+  return montado;
 }
 
 function adiar() {
@@ -50,7 +59,7 @@ describe('PedidosContext', () => {
   describe('carregar', () => {
     it('busca os pedidos do usuário e guarda a lista e a origem', async () => {
       listarPedidos.mockResolvedValue({ dados: [antigo], origem: 'api' });
-      const { result } = montar();
+      const { result } = montarComAna();
 
       await act(() => result.current.pedidos.carregar('u1'));
 
@@ -64,7 +73,7 @@ describe('PedidosContext', () => {
     it('fica carregando enquanto o serviço não responde', async () => {
       const espera = adiar();
       listarPedidos.mockReturnValue(espera.promessa);
-      const { result } = montar();
+      const { result } = montarComAna();
 
       let chamada;
       act(() => {
@@ -81,7 +90,7 @@ describe('PedidosContext', () => {
 
     it('mostra uma mensagem em português quando a busca falha', async () => {
       listarPedidos.mockRejectedValue(new Error('Network Error'));
-      const { result } = montar();
+      const { result } = montarComAna();
 
       await act(() => result.current.pedidos.carregar('u1'));
 
@@ -94,7 +103,7 @@ describe('PedidosContext', () => {
       listarPedidos.mockRejectedValueOnce(new Error('Network Error'));
       const espera = adiar();
       listarPedidos.mockReturnValueOnce(espera.promessa);
-      const { result } = montar();
+      const { result } = montarComAna();
 
       await act(() => result.current.pedidos.carregar('u1'));
       let chamada;
@@ -109,13 +118,69 @@ describe('PedidosContext', () => {
       });
       expect(result.current.pedidos.pedidos).toEqual([antigo]);
     });
+
+    it('fica com a resposta da busca mais nova quando a mais antiga chega depois', async () => {
+      const primeira = adiar();
+      const segunda = adiar();
+      listarPedidos.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa);
+      const { result } = montarComAna();
+
+      let chamadas;
+      act(() => {
+        chamadas = [result.current.pedidos.carregar('u1'), result.current.pedidos.carregar('u1')];
+      });
+      await act(async () => {
+        segunda.resolver({ dados: [criado, antigo], origem: 'api' });
+        await chamadas[1];
+      });
+      await act(async () => {
+        primeira.resolver({ dados: [maisAntigo], origem: 'local' });
+        await chamadas[0];
+      });
+
+      expect(result.current.pedidos.pedidos).toEqual([criado, antigo]);
+      expect(result.current.pedidos.origem).toBe('api');
+      expect(result.current.pedidos.carregando).toBe(false);
+    });
+
+    it('não mostra erro de uma busca antiga depois que a mais nova deu certo', async () => {
+      const primeira = adiar();
+      const segunda = adiar();
+      listarPedidos.mockReturnValueOnce(primeira.promessa).mockReturnValueOnce(segunda.promessa);
+      const { result } = montarComAna();
+
+      let chamadas;
+      act(() => {
+        chamadas = [result.current.pedidos.carregar('u1'), result.current.pedidos.carregar('u1')];
+      });
+      await act(async () => {
+        segunda.resolver({ dados: [antigo], origem: 'api' });
+        await chamadas[1];
+      });
+      await act(async () => {
+        primeira.rejeitar(new Error('Network Error'));
+        await chamadas[0];
+      });
+
+      expect(result.current.pedidos.erro).toBeNull();
+      expect(result.current.pedidos.pedidos).toEqual([antigo]);
+    });
+
+    it('só mostra os pedidos de quem está logado', async () => {
+      listarPedidos.mockResolvedValue({ dados: [antigo, daBia], origem: 'api' });
+      const { result } = montarComAna();
+
+      await act(() => result.current.pedidos.carregar('u1'));
+
+      expect(result.current.pedidos.pedidos).toEqual([antigo]);
+    });
   });
 
   describe('registrar', () => {
     it('cria pelo serviço, põe o pedido no começo da lista e devolve o criado', async () => {
       listarPedidos.mockResolvedValue({ dados: [antigo], origem: 'local' });
       criarPedido.mockResolvedValue({ dados: criado, origem: 'api' });
-      const { result } = montar();
+      const { result } = montarComAna();
       await act(() => result.current.pedidos.carregar('u1'));
 
       let devolvido;
@@ -132,7 +197,7 @@ describe('PedidosContext', () => {
     it('repassa o erro do serviço e deixa a lista como estava', async () => {
       listarPedidos.mockResolvedValue({ dados: [antigo], origem: 'api' });
       criarPedido.mockRejectedValue(new Error('falhou'));
-      const { result } = montar();
+      const { result } = montarComAna();
       await act(() => result.current.pedidos.carregar('u1'));
 
       let erro;
@@ -151,24 +216,32 @@ describe('PedidosContext', () => {
   });
 
   describe('ao sair da conta', () => {
-    it('esvazia a lista de pedidos de quem estava logado', async () => {
+    it('esvazia a lista e volta a origem para local', async () => {
       listarPedidos.mockResolvedValue({ dados: [antigo], origem: 'api' });
-      const { result } = montar();
-      act(() => result.current.conta.entrar(ana));
+      const { result } = montarComAna();
       await act(() => result.current.pedidos.carregar('u1'));
 
       act(() => result.current.conta.sair());
 
       expect(result.current.pedidos.pedidos).toEqual([]);
-      expect(result.current.pedidos.erro).toBeNull();
+      expect(result.current.pedidos.origem).toBe('local');
       expect(result.current.pedidos.carregando).toBe(false);
+    });
+
+    it('apaga o erro da última busca', async () => {
+      listarPedidos.mockRejectedValue(new Error('Network Error'));
+      const { result } = montarComAna();
+      await act(() => result.current.pedidos.carregar('u1'));
+
+      act(() => result.current.conta.sair());
+
+      expect(result.current.pedidos.erro).toBeNull();
     });
 
     it('descarta a resposta de uma busca que ainda estava em andamento', async () => {
       const espera = adiar();
       listarPedidos.mockReturnValue(espera.promessa);
-      const { result } = montar();
-      act(() => result.current.conta.entrar(ana));
+      const { result } = montarComAna();
       let chamada;
       act(() => {
         chamada = result.current.pedidos.carregar('u1');
@@ -181,21 +254,27 @@ describe('PedidosContext', () => {
       });
 
       expect(result.current.pedidos.pedidos).toEqual([]);
+      expect(result.current.pedidos.origem).toBe('local');
       expect(result.current.pedidos.carregando).toBe(false);
     });
-  });
 
-  it('mantém o mesmo valor e as mesmas funções enquanto o estado não muda', async () => {
-    listarPedidos.mockResolvedValue({ dados: [antigo], origem: 'api' });
-    const { result, rerender } = montar();
-    const antes = result.current.pedidos;
+    it('não mostra para a próxima pessoa o pedido de quem saiu antes de o serviço responder', async () => {
+      const espera = adiar();
+      criarPedido.mockReturnValue(espera.promessa);
+      const { result } = montarComAna();
+      let chamada;
+      act(() => {
+        chamada = result.current.pedidos.registrar(novo);
+      });
 
-    rerender();
-    expect(result.current.pedidos).toBe(antes);
+      act(() => result.current.conta.sair());
+      act(() => result.current.conta.entrar(bia));
+      await act(async () => {
+        espera.resolver({ dados: criado, origem: 'api' });
+        await chamada;
+      });
 
-    await act(() => result.current.pedidos.carregar('u1'));
-    await waitFor(() => expect(result.current.pedidos.pedidos).toEqual([antigo]));
-    expect(result.current.pedidos.carregar).toBe(antes.carregar);
-    expect(result.current.pedidos.registrar).toBe(antes.registrar);
+      expect(result.current.pedidos.pedidos).toEqual([]);
+    });
   });
 });

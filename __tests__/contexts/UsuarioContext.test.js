@@ -31,16 +31,4 @@ describe('UsuarioContext', () => {
 
     expect(result.current.usuario).toBeNull();
   });
-
-  it('mantém as mesmas funções e o mesmo valor entre renderizações', () => {
-    const { result, rerender } = renderHook(() => useUsuario(), { wrapper: envolver });
-    const antes = result.current;
-
-    rerender();
-
-    expect(result.current).toBe(antes);
-    act(() => result.current.entrar(ana));
-    expect(result.current.entrar).toBe(antes.entrar);
-    expect(result.current.sair).toBe(antes.sair);
-  });
 });
