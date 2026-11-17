@@ -154,7 +154,8 @@ describe('Cardapio', () => {
     expect(screen.queryByText('Nada encontrado')).toBeNull();
     expect(screen.getByText('5 itens')).toBeOnTheScreen();
     expect(screen.getByLabelText('Buscar no cardápio').props.value).toBe('');
-    expect(screen.getByLabelText('Categoria').props.selectedValue).toBe('');
+    // Todas as categorias é a primeira opção do seletor.
+    expect(screen.getByLabelText('Categoria').props.selectedIndex).toBe(0);
   });
 
   it('Adicionar põe o item no carrinho e a barra aparece com quantidade e total', async () => {
