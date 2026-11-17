@@ -9,8 +9,8 @@ export default StyleSheet.create({
     gap: espacos.xs,
   },
   botao: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 48,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: raios.md,

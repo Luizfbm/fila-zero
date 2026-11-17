@@ -16,7 +16,7 @@ export default StyleSheet.create({
     backgroundColor: cores.sucessoClaro,
   },
   alerta: {
-    backgroundColor: cores.destaque,
+    backgroundColor: cores.alertaClaro,
   },
   erro: {
     backgroundColor: cores.erroClaro,

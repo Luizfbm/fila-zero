@@ -22,6 +22,8 @@ export default StyleSheet.create({
     color: cores.textoSuave,
     textAlign: 'center',
     marginTop: espacos.sm,
+    // Centralizada num navegador largo, a mensagem viraria uma linha só.
+    maxWidth: espacos.xl * 10,
   },
   acao: {
     marginTop: espacos.lg,

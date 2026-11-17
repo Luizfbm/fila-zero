@@ -15,9 +15,7 @@ export default function ControleQuantidade({ valor, aoDiminuir, aoAumentar }) {
       >
         <MaterialCommunityIcons name="minus" size={20} color={cores.primariaEscura} />
       </Pressable>
-      <Text style={styles.valor} accessibilityLabel={`Quantidade: ${valor}`}>
-        {valor}
-      </Text>
+      <Text style={styles.valor}>{valor}</Text>
       <Pressable
         onPress={aoAumentar}
         accessibilityRole="button"

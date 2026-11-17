@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, Text } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import styles, { corDoConteudo } from './styles';
+import styles, { corDoConteudo, titulosPorVariante } from './styles';
 
 export default function Botao({
   titulo,
@@ -39,7 +39,9 @@ export default function Botao({
           color={cor}
         />
       ) : null}
-      <Text style={[styles.titulo, { color: cor }]}>{titulo}</Text>
+      <Text style={[styles.titulo, styles[titulosPorVariante[variante]]]}>
+        {titulo}
+      </Text>
     </Pressable>
   );
 }

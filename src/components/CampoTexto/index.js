@@ -17,7 +17,7 @@ export default function CampoTexto({ rotulo, erro, style, onFocus, onBlur, ...pr
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Text style={styles.rotulo}>{rotulo}</Text>
       <TextInput
         accessibilityLabel={rotulo}
@@ -29,7 +29,6 @@ export default function CampoTexto({ rotulo, erro, style, onFocus, onBlur, ...pr
           styles.campo,
           focado && styles.campoFocado,
           erro ? styles.campoComErro : null,
-          style,
         ]}
       />
       {erro ? (

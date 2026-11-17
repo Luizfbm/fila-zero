@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import styles from './styles';
 
-export default function Seletor({ rotulo, valor, aoMudar, opcoes = [], erro }) {
+export default function Seletor({ rotulo, valor, aoMudar, opcoes = [], erro, style }) {
   const [focado, setFocado] = useState(false);
 
   // Na web o Picker é um <select> e sempre entrega texto,
@@ -14,9 +14,10 @@ export default function Seletor({ rotulo, valor, aoMudar, opcoes = [], erro }) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <Text style={styles.rotulo}>{rotulo}</Text>
       <View
+        testID="seletor-caixa"
         style={[
           styles.caixa,
           focado && styles.caixaFocada,

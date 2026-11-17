@@ -7,6 +7,12 @@ export const corDoConteudo = {
   texto: cores.primariaEscura,
 };
 
+export const titulosPorVariante = {
+  primario: 'tituloPrimario',
+  secundario: 'tituloSecundario',
+  texto: 'tituloTexto',
+};
+
 export default StyleSheet.create({
   base: {
     minHeight: 48,
@@ -42,5 +48,15 @@ export default StyleSheet.create({
     ...fontes.corpo,
     fontWeight: '600',
     textAlign: 'center',
+    color: corDoConteudo.primario,
+  },
+  tituloPrimario: {
+    color: corDoConteudo.primario,
+  },
+  tituloSecundario: {
+    color: corDoConteudo.secundario,
+  },
+  tituloTexto: {
+    color: corDoConteudo.texto,
   },
 });
