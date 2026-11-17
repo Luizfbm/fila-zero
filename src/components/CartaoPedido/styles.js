@@ -5,6 +5,13 @@ export default StyleSheet.create({
   pressionado: {
     opacity: 0.85,
   },
+  // Pronto é o status que faz a pessoa ir ao balcão, então o cartão se destaca dos outros.
+  pronto: {
+    borderColor: cores.sucesso,
+  },
+  apagado: {
+    color: cores.textoSuave,
+  },
   topo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -14,21 +21,12 @@ export default StyleSheet.create({
   identificacao: {
     flex: 1,
   },
-  numero: {
-    ...fontes.subtitulo,
-  },
-  data: {
-    ...fontes.legenda,
-    marginTop: espacos.xs,
-  },
   retirada: {
-    ...fontes.corpo,
-    marginTop: espacos.md,
+    ...fontes.subtitulo,
+    marginBottom: espacos.xs,
   },
-  resumo: {
-    ...fontes.corpo,
-    color: cores.textoSuave,
-    marginTop: espacos.xs,
+  legenda: {
+    ...fontes.legenda,
   },
   detalhe: {
     marginTop: espacos.md,
@@ -60,24 +58,23 @@ export default StyleSheet.create({
     ...fontes.corpo,
     marginTop: espacos.xs,
   },
-  rodape: {
+  linhaDoTotal: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: espacos.md,
-    paddingTop: espacos.md,
-    borderTopWidth: 1,
-    borderTopColor: cores.borda,
-  },
-  total: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
     gap: espacos.sm,
+    marginTop: espacos.md,
+  },
+  resumo: {
+    ...fontes.corpo,
+    color: cores.textoSuave,
+    flex: 1,
   },
   totalRotulo: {
     ...fontes.legenda,
+    flex: 1,
   },
   totalValor: {
-    ...fontes.subtitulo,
+    ...fontes.corpo,
+    fontWeight: '600',
   },
 });

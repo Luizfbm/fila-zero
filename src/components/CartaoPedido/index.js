@@ -8,46 +8,48 @@ import { formatarData, formatarMoeda } from '../../utils/formatar';
 import { rotuloStatus, tomStatus } from '../../utils/statusPedido';
 import styles from './styles';
 
+// Pedido guardado só no aparelho tem id "local-1"; para quem lê, o número é 1.
+function numeroDoPedido(id) {
+  return String(id).replace(/^local-/, '');
+}
+
 export default function CartaoPedido({ pedido, status, aberto = false, aoAlternar }) {
   const itens = pedido.itens || [];
   const resumo = itens.map((item) => `${item.quantidade}x ${item.nome}`).join(', ');
   const observacao = pedido.observacao ? String(pedido.observacao).trim() : '';
+  const data = formatarData(pedido.criadoEm);
+  const numero = `Pedido nº ${numeroDoPedido(pedido.id)}`;
+  const legenda = data ? `${numero}, feito em ${data}` : numero;
+  const apagado = status === 'retirado' ? styles.apagado : null;
 
   return (
     <Pressable
+      testID={`cartao-pedido-${pedido.id}`}
       onPress={() => aoAlternar(pedido.id)}
       accessibilityRole="button"
       accessibilityState={{ expanded: aberto }}
-      accessibilityHint={aberto ? 'Fecha os itens do pedido' : 'Mostra os itens do pedido'}
+      accessibilityHint={aberto ? 'Esconde os itens do pedido' : 'Mostra os itens do pedido'}
       style={({ pressed }) => (pressed ? styles.pressionado : null)}
     >
-      <Cartao>
+      <Cartao style={status === 'pronto' ? styles.pronto : null}>
         <View style={styles.topo}>
           <View style={styles.identificacao}>
-            <Text style={styles.numero}>Pedido nº {pedido.id}</Text>
-            <Text style={styles.data}>{formatarData(pedido.criadoEm)}</Text>
+            {pedido.retirada ? (
+              <Text style={[styles.retirada, apagado]}>Retirada às {pedido.retirada}</Text>
+            ) : null}
+            <Text style={styles.legenda}>{legenda}</Text>
           </View>
           <Etiqueta texto={rotuloStatus(status)} tom={tomStatus(status)} />
         </View>
-
-        {pedido.retirada ? (
-          <Text style={styles.retirada}>Retirada às {pedido.retirada}</Text>
-        ) : null}
-
-        {!aberto && resumo ? (
-          <Text style={styles.resumo} numberOfLines={1}>
-            {resumo}
-          </Text>
-        ) : null}
 
         {aberto ? (
           <View style={styles.detalhe}>
             {itens.map((item) => (
               <View key={String(item.produtoId)} style={styles.item}>
-                <Text style={styles.itemNome}>
+                <Text style={[styles.itemNome, apagado]}>
                   {item.quantidade}x {item.nome}
                 </Text>
-                <Text style={styles.itemSubtotal}>
+                <Text style={[styles.itemSubtotal, apagado]}>
                   {formatarMoeda(item.preco * item.quantidade)}
                 </Text>
               </View>
@@ -55,20 +57,24 @@ export default function CartaoPedido({ pedido, status, aberto = false, aoAlterna
             {observacao ? (
               <View style={styles.observacao}>
                 <Text style={styles.observacaoTitulo}>Observação</Text>
-                <Text style={styles.observacaoTexto}>{observacao}</Text>
+                <Text style={[styles.observacaoTexto, apagado]}>{observacao}</Text>
               </View>
             ) : null}
           </View>
         ) : null}
 
-        <View style={styles.rodape}>
-          <View style={styles.total}>
+        <View style={styles.linhaDoTotal}>
+          {aberto ? (
             <Text style={styles.totalRotulo}>Total</Text>
-            <Text style={styles.totalValor}>{formatarMoeda(pedido.total)}</Text>
-          </View>
+          ) : (
+            <Text style={styles.resumo} numberOfLines={1}>
+              {resumo}
+            </Text>
+          )}
+          <Text style={[styles.totalValor, apagado]}>{formatarMoeda(pedido.total)}</Text>
           <MaterialCommunityIcons
             name={aberto ? 'chevron-up' : 'chevron-down'}
-            size={24}
+            size={20}
             color={cores.textoSuave}
           />
         </View>

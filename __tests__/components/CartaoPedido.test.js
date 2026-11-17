@@ -32,6 +32,12 @@ function montar(props = {}) {
   return aoAlternar;
 }
 
+// A caixa do Cartao é a primeira View dentro da área tocável.
+function caixaDoCartao() {
+  const tocavel = screen.getByTestId('cartao-pedido-12');
+  return tocavel.findAll((no) => typeof no.type === 'string' && no !== tocavel)[0];
+}
+
 describe('CartaoPedido', () => {
   it('mostra número, data, retirada, resumo, total e status', () => {
     montar();
@@ -148,7 +154,7 @@ describe('CartaoPedido', () => {
   it('pedido pronto ganha a borda na cor de sucesso', () => {
     montar({ status: 'pronto' });
 
-    expect(screen.getByTestId('cartao-pedido-12').children[0]).toHaveStyle({
+    expect(caixaDoCartao()).toHaveStyle({
       borderColor: cores.sucesso,
     });
   });
@@ -156,7 +162,7 @@ describe('CartaoPedido', () => {
   it('os outros status ficam com a borda comum', () => {
     montar();
 
-    expect(screen.getByTestId('cartao-pedido-12').children[0]).toHaveStyle({
+    expect(caixaDoCartao()).toHaveStyle({
       borderColor: cores.borda,
     });
   });
