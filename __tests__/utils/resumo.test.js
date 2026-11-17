@@ -83,6 +83,15 @@ describe('filtrarPorPeriodo', () => {
     expect(filtrarPorPeriodo(lista, 'tudo', agora)).toHaveLength(2);
   });
 
+  it('data sem hora vale como dia local, não como meia-noite em UTC', () => {
+    const lista = [pedido('hoje-sem-hora', [], '2026-11-17'), pedido('ontem-sem-hora', [], '2026-11-16')];
+
+    expect(filtrarPorPeriodo(lista, 'hoje', agora).map((atual) => atual.id)).toEqual(['hoje-sem-hora']);
+    expect(filtrarPorPeriodo(lista, 'hoje', new Date(2026, 10, 17, 0, 5)).map((atual) => atual.id)).toEqual([
+      'hoje-sem-hora',
+    ]);
+  });
+
   it('período desconhecido se comporta como "tudo"', () => {
     expect(ids('semana-que-vem')).toHaveLength(pedidos.length);
   });
@@ -148,6 +157,14 @@ describe('resumir', () => {
     expect(resumir([semTotal]).totalGasto).toBe(15);
   });
 
+  it('soma os itens mesmo quando o total do pedido diz outra coisa, para fechar com as barras', () => {
+    const divergente = pedido('1', [item('1', 'Coxinha de frango', 7.5, 2, 'salgados')]);
+    divergente.total = 99;
+
+    expect(resumir([divergente]).totalGasto).toBe(15);
+    expect(gastoPorCategoria([divergente], categorias)[0].valor).toBe(15);
+  });
+
   it('junta o mesmo item de pedidos diferentes para achar o mais pedido', () => {
     const pedidos = [
       pedido('1', [item('1', 'Coxinha de frango', 7.5, 2, 'salgados'), item('9', 'Suco de laranja', 8, 3, 'bebidas')]),
@@ -201,7 +218,7 @@ describe('gastoPorCategoria', () => {
     expect(lista.reduce((soma, atual) => soma + atual.percentual, 0)).toBe(100);
   });
 
-  it('tira do maior quando o arredondamento passa de 100', () => {
+  it('dá o ponto que falta para quem tem a maior parte decimal', () => {
     const pedidos = [
       pedido('1', [
         item('1', 'Coxinha de frango', 49.5, 1, 'salgados'),
@@ -211,7 +228,66 @@ describe('gastoPorCategoria', () => {
     ];
     const lista = gastoPorCategoria(pedidos, categorias);
 
-    expect(lista.map((atual) => atual.percentual)).toEqual([49, 26, 25]);
+    expect(lista.map((atual) => atual.percentual)).toEqual([50, 25, 25]);
+  });
+
+  it('categorias com o mesmo valor ficam com o mesmo percentual (15, 15, 5 e 5)', () => {
+    const quatro = [...categorias, { id: 'doces', nome: 'Doces', icone: 'cupcake' }];
+    const pedidos = [
+      pedido('1', [
+        item('5', 'X-salada', 15, 1, 'lanches'),
+        item('1', 'Coxinha de frango', 7.5, 2, 'salgados'),
+        item('9', 'Suco de laranja', 5, 1, 'bebidas'),
+        item('12', 'Brigadeiro', 2.5, 2, 'doces'),
+      ]),
+    ];
+    const lista = gastoPorCategoria(pedidos, quatro);
+
+    expect(lista.map((atual) => [atual.nome, atual.percentual])).toEqual([
+      ['Lanches', 38],
+      ['Salgados', 38],
+      ['Bebidas', 12],
+      ['Doces', 12],
+    ]);
+  });
+
+  it('com seis categorias quase iguais, a maior nunca fica com percentual menor que as outras', () => {
+    const seis = ['a', 'b', 'c', 'd', 'e', 'f'].map((letra) => ({ id: letra, nome: `Categoria ${letra}`, icone: 'food' }));
+    const pedidos = [
+      pedido('1', [
+        item('1', 'Item a', 10.01, 1, 'a'),
+        ...['b', 'c', 'd', 'e', 'f'].map((letra, indice) => item(String(indice + 2), `Item ${letra}`, 10, 1, letra)),
+      ]),
+    ];
+    const percentuais = gastoPorCategoria(pedidos, seis).map((atual) => atual.percentual);
+
+    expect(percentuais).toEqual([17, 17, 17, 17, 16, 16]);
+    expect(percentuais.reduce((soma, atual) => soma + atual, 0)).toBe(100);
+  });
+
+  it('valores iguais diferem no máximo em 1 ponto, e quem vem antes na lista leva o desempate', () => {
+    const pedidos = [
+      pedido('1', [
+        item('1', 'Coxinha de frango', 10, 1, 'salgados'),
+        item('5', 'X-salada', 10, 1, 'lanches'),
+        item('9', 'Suco de laranja', 10, 1, 'bebidas'),
+      ]),
+    ];
+    const lista = gastoPorCategoria(pedidos, categorias);
+
+    expect(lista.map((atual) => [atual.nome, atual.percentual])).toEqual([
+      ['Bebidas', 34],
+      ['Lanches', 33],
+      ['Salgados', 33],
+    ]);
+  });
+
+  it('categoria com menos de 1% do total continua na lista, com percentual 0', () => {
+    const pedidos = [
+      pedido('1', [item('5', 'X-salada', 199.5, 1, 'lanches'), item('9', 'Bala', 0.5, 1, 'bebidas')]),
+    ];
+
+    expect(gastoPorCategoria(pedidos, categorias).map((atual) => atual.percentual)).toEqual([100, 0]);
   });
 
   it('uma categoria só fica com 100%', () => {
@@ -273,10 +349,21 @@ describe('itensMaisPedidos', () => {
 
   it('junta por produto e ordena pela quantidade; no empate, pelo valor gasto', () => {
     expect(itensMaisPedidos(pedidos)).toEqual([
-      { nome: 'Coxinha de frango', quantidade: 3, valor: 22.5 },
-      { nome: 'Pão de queijo', quantidade: 2, valor: 10 },
-      { nome: 'X-salada', quantidade: 1, valor: 17 },
-      { nome: 'Suco de laranja', quantidade: 1, valor: 8 },
+      { produtoId: '1', nome: 'Coxinha de frango', quantidade: 3, valor: 22.5 },
+      { produtoId: '2', nome: 'Pão de queijo', quantidade: 2, valor: 10 },
+      { produtoId: '5', nome: 'X-salada', quantidade: 1, valor: 17 },
+      { produtoId: '9', nome: 'Suco de laranja', quantidade: 1, valor: 8 },
+    ]);
+  });
+
+  it('produtos diferentes com o mesmo nome não se misturam', () => {
+    const repetidos = [
+      pedido('1', [item('30', 'Combo do dia', 20, 2, 'lanches'), item('31', 'Combo do dia', 25, 1, 'lanches')]),
+    ];
+
+    expect(itensMaisPedidos(repetidos)).toEqual([
+      { produtoId: '30', nome: 'Combo do dia', quantidade: 2, valor: 40 },
+      { produtoId: '31', nome: 'Combo do dia', quantidade: 1, valor: 25 },
     ]);
   });
 
