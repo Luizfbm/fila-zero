@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { cores, espacos, fontes, raios } from '../../theme';
+import { cores, espacos, fontes } from '../../theme';
 
 export default StyleSheet.create({
   tela: {
@@ -9,7 +9,7 @@ export default StyleSheet.create({
   rolagem: {
     alignItems: 'center',
     paddingHorizontal: espacos.md,
-    paddingTop: espacos.lg,
+    paddingTop: espacos.md,
     paddingBottom: espacos.xl,
   },
   // Na web larga o formulário não estica: fica numa coluna no meio da tela.
@@ -20,34 +20,25 @@ export default StyleSheet.create({
   abertura: {
     marginBottom: espacos.lg,
   },
-  marca: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espacos.sm,
-    marginBottom: espacos.sm,
-  },
-  selo: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: raios.md,
-    backgroundColor: cores.primaria,
-  },
   nomeDoApp: {
     ...fontes.titulo,
-    fontSize: 30,
     color: cores.primariaEscura,
   },
   frase: {
     ...fontes.corpo,
     color: cores.textoSuave,
+    marginTop: espacos.xs,
   },
   aviso: {
     marginBottom: espacos.md,
   },
   secao: {
-    marginBottom: espacos.md,
+    paddingBottom: espacos.lg,
+  },
+  secaoComDivisor: {
+    paddingTop: espacos.lg,
+    borderTopWidth: 1,
+    borderTopColor: cores.borda,
   },
   tituloDaSecao: {
     ...fontes.subtitulo,
@@ -59,21 +50,24 @@ export default StyleSheet.create({
   campos: {
     marginTop: espacos.md,
   },
-  // O Cartao já tem respiro embaixo, então o último campo de cada seção não precisa de margem.
+  // A seção já tem respiro embaixo, então o último campo dela não precisa de margem.
   ultimoCampo: {
     marginBottom: 0,
   },
   grupoDoCep: {
     marginBottom: espacos.md,
   },
-  buscando: {
+  // Altura fixa: cabe o indicador de busca sem a linha crescer quando ele aparece.
+  dicaDoCep: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: espacos.sm,
-    marginTop: espacos.sm,
+    minHeight: 20,
+    marginTop: espacos.xs,
   },
-  textoBuscando: {
+  textoDaDica: {
     ...fontes.legenda,
+    flex: 1,
   },
   linha: {
     flexDirection: 'row',

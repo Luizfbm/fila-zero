@@ -8,12 +8,11 @@ import {
   View,
 } from 'react-native';
 import { useFormik } from 'formik';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Aviso from '../../components/Aviso';
 import Botao from '../../components/Botao';
 import CampoSenha from '../../components/CampoSenha';
 import CampoTexto from '../../components/CampoTexto';
-import Cartao from '../../components/Cartao';
 import Seletor from '../../components/Seletor';
 import { useUsuario } from '../../contexts/UsuarioContext';
 import cursos from '../../data/cursos.json';
@@ -40,21 +39,26 @@ const VALORES_INICIAIS = {
 
 // O curso é guardado pelo nome, que é o que as outras telas mostram.
 const OPCOES_DE_CURSO = [
-  { rotulo: 'Escolha seu curso', valor: '' },
+  { rotulo: 'Selecione', valor: '' },
   ...cursos.map((curso) => ({ rotulo: curso.nome, valor: curso.nome })),
 ];
 
 const FALHA_NO_ENVIO = 'Não deu para criar sua conta agora. Tente de novo daqui a pouco.';
 
-function Secao({ titulo, dica, children }) {
+const DICA_DO_CEP = 'Com o CEP, a gente preenche rua, bairro, cidade e UF.';
+
+// Altura padrão do cabeçalho do React Navigation, que fica acima desta tela.
+const ALTURA_DO_CABECALHO = Platform.OS === 'ios' ? 44 : 64;
+
+function Secao({ titulo, dica, primeira = false, children }) {
   return (
-    <Cartao style={styles.secao}>
+    <View style={[styles.secao, primeira ? null : styles.secaoComDivisor]}>
       <Text style={styles.tituloDaSecao} accessibilityRole="header">
         {titulo}
       </Text>
       {dica ? <Text style={styles.dicaDaSecao}>{dica}</Text> : null}
       <View style={styles.campos}>{children}</View>
-    </Cartao>
+    </View>
   );
 }
 
@@ -62,13 +66,22 @@ export default function Cadastro() {
   const { entrar } = useUsuario();
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [erroDoCep, setErroDoCep] = useState('');
+  // Dígitos do CEP que o ViaCEP disse que não existe. Enquanto o campo tiver esse CEP, não envio.
+  const [cepInexistente, setCepInexistente] = useState('');
   const [erroDoEnvio, setErroDoEnvio] = useState('');
-  // Guardo a ScrollView no estado para conseguir voltar ao topo quando o envio tem erro.
-  const [rolagem, setRolagem] = useState(null);
+  const margens = useSafeAreaInsets();
+
+  function validar(valores) {
+    const erros = validarCadastro(valores);
+    if (cepInexistente && somenteDigitos(valores.cep) === cepInexistente) {
+      erros.cep = erroDoCep;
+    }
+    return erros;
+  }
 
   const formik = useFormik({
     initialValues: VALORES_INICIAIS,
-    validate: validarCadastro,
+    validate: validar,
     onSubmit: async (valores) => {
       setErroDoEnvio('');
       try {
@@ -103,12 +116,17 @@ export default function Cadastro() {
       try {
         const endereco = await buscarCep(digitosDoCep);
         if (!valendo) return;
-        formik.setFieldValue('logradouro', endereco.logradouro);
-        formik.setFieldValue('bairro', endereco.bairro);
-        formik.setFieldValue('cidade', endereco.cidade);
-        formik.setFieldValue('uf', endereco.uf);
+        // CEP de cidade pequena vem sem rua e sem bairro. Só preencho o que veio,
+        // para não apagar o que a pessoa já digitou.
+        ['logradouro', 'bairro', 'cidade', 'uf'].forEach((campo) => {
+          if (endereco[campo]) formik.setFieldValue(campo, endereco[campo]);
+        });
       } catch (erro) {
-        if (valendo) setErroDoCep(erro.message);
+        if (valendo) {
+          setErroDoCep(erro.message);
+          // O serviço só entrega a mensagem, então é por ela que separo CEP que não existe de falha de rede.
+          if (/não encontrado/i.test(erro.message)) setCepInexistente(digitosDoCep);
+        }
       }
       if (valendo) setBuscandoCep(false);
     }
@@ -119,6 +137,11 @@ export default function Cadastro() {
       valendo = false;
     };
   }, [digitosDoCep]);
+
+  // Revalido quando descubro que o CEP não existe, para ele entrar na conta dos campos com erro.
+  useEffect(() => {
+    if (cepInexistente) formik.validateForm();
+  }, [cepInexistente]);
 
   const tentouEnviar = formik.submitCount > 0;
   const camposComErro = Object.keys(formik.errors).length;
@@ -136,57 +159,34 @@ export default function Cadastro() {
     formik.setFieldValue('uf', texto.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase());
   }
 
+  // O Enter do último campo passa por aqui, então seguro o segundo envio enquanto o primeiro não volta.
   function aoEnviar() {
-    const temErro = Object.keys(validarCadastro(formik.values)).length > 0;
-    if (temErro && rolagem && rolagem.scrollTo) {
-      rolagem.scrollTo({ y: 0, animated: true });
-    }
+    if (formik.isSubmitting) return;
     formik.handleSubmit();
   }
 
   return (
     <KeyboardAvoidingView
       style={styles.tela}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
+      keyboardVerticalOffset={margens.top + ALTURA_DO_CABECALHO}
     >
       <ScrollView
-        ref={setRolagem}
         style={styles.tela}
         contentContainerStyle={styles.rolagem}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.conteudo}>
           <View style={styles.abertura}>
-            <View style={styles.marca}>
-              <View style={styles.selo}>
-                <MaterialCommunityIcons
-                  name="silverware-fork-knife"
-                  size={22}
-                  color={cores.textoSobrePrimaria}
-                />
-              </View>
-              <Text style={styles.nomeDoApp} accessibilityRole="header">
-                Fila Zero
-              </Text>
-            </View>
+            <Text style={styles.nomeDoApp} accessibilityRole="header">
+              Fila Zero
+            </Text>
             <Text style={styles.frase}>
               Peça na cantina pelo celular e retire no balcão sem pegar fila.
             </Text>
           </View>
 
-          {tentouEnviar && camposComErro > 0 ? (
-            <Aviso
-              tipo="erro"
-              style={styles.aviso}
-              mensagem={
-                camposComErro === 1
-                  ? 'Falta 1 campo para corrigir.'
-                  : `Faltam ${camposComErro} campos para corrigir.`
-              }
-            />
-          ) : null}
-
-          <Secao titulo="Seus dados">
+          <Secao titulo="Seus dados" primeira>
             <CampoTexto
               rotulo="Nome completo"
               value={formik.values.nome}
@@ -227,7 +227,7 @@ export default function Cadastro() {
             />
           </Secao>
 
-          <Secao titulo="Endereço" dica="Digite o CEP que o resto a gente preenche.">
+          <Secao titulo="Endereço">
             <View style={styles.grupoDoCep}>
               <CampoTexto
                 rotulo="CEP"
@@ -237,21 +237,19 @@ export default function Cadastro() {
                 erro={erroDe('cep') || erroDoCep}
                 placeholder="00000-000"
                 keyboardType="numeric"
-                maxLength={9}
                 autoComplete="postal-code"
                 style={styles.ultimoCampo}
               />
-              {buscandoCep ? (
-                <View style={styles.buscando}>
-                  <ActivityIndicator size="small" color={cores.primaria} />
-                  <Text style={styles.textoBuscando} accessibilityLiveRegion="polite">
-                    Buscando endereço
-                  </Text>
-                </View>
-              ) : null}
+              {/* A dica e o aviso de busca dividem a mesma linha, então nada sai do lugar. */}
+              <View style={styles.dicaDoCep}>
+                {buscandoCep ? <ActivityIndicator size="small" color={cores.primaria} /> : null}
+                <Text style={styles.textoDaDica} accessibilityLiveRegion="polite">
+                  {buscandoCep ? 'Buscando endereço' : DICA_DO_CEP}
+                </Text>
+              </View>
             </View>
             <CampoTexto
-              rotulo="Logradouro"
+              rotulo="Rua (opcional)"
               value={formik.values.logradouro}
               onChangeText={formik.handleChange('logradouro')}
               onBlur={() => formik.setFieldTouched('logradouro')}
@@ -259,7 +257,7 @@ export default function Cadastro() {
               autoCapitalize="words"
             />
             <CampoTexto
-              rotulo="Bairro"
+              rotulo="Bairro (opcional)"
               value={formik.values.bairro}
               onChangeText={formik.handleChange('bairro')}
               onBlur={() => formik.setFieldTouched('bairro')}
@@ -290,7 +288,7 @@ export default function Cadastro() {
             </View>
           </Secao>
 
-          <Secao titulo="Senha" dica="Pelo menos 6 caracteres, com letra e número.">
+          <Secao titulo="Acesso" dica="Use pelo menos 6 caracteres, com letras e números.">
             <CampoSenha
               rotulo="Senha"
               value={formik.values.senha}
@@ -300,17 +298,29 @@ export default function Cadastro() {
               autoComplete="new-password"
             />
             <CampoSenha
-              rotulo="Confirmar senha"
+              rotulo="Repita a senha"
               value={formik.values.confirmarSenha}
               onChangeText={formik.handleChange('confirmarSenha')}
               onBlur={() => formik.setFieldTouched('confirmarSenha')}
               erro={erroDe('confirmarSenha')}
               autoComplete="new-password"
+              returnKeyType="done"
               onSubmitEditing={aoEnviar}
               style={styles.ultimoCampo}
             />
           </Secao>
 
+          {tentouEnviar && camposComErro > 0 ? (
+            <Aviso
+              tipo="erro"
+              style={styles.aviso}
+              mensagem={
+                camposComErro === 1
+                  ? 'Corrija o campo marcado em vermelho.'
+                  : `Corrija os ${camposComErro} campos marcados em vermelho.`
+              }
+            />
+          ) : null}
           {erroDoEnvio ? <Aviso tipo="erro" mensagem={erroDoEnvio} style={styles.aviso} /> : null}
 
           <Botao titulo="Criar conta" onPress={aoEnviar} carregando={formik.isSubmitting} />
