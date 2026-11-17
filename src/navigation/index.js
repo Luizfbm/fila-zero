@@ -23,7 +23,7 @@ function SemBotao() {
 }
 
 const opcoesDasTelas = {
-  // 'front' é o tipo que abre pelo ícone do cabeçalho também na web.
+  // O menu abre por cima da tela, com o fundo escurecido, igual no celular e na web.
   drawerType: 'front',
   overlayAccessibilityLabel: 'Fechar menu',
   headerStyle: { backgroundColor: cores.fundo },

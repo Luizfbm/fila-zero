@@ -17,6 +17,8 @@ const ICONES = {
   [ROTAS.PAINEL]: 'chart-bar',
 };
 
+const LIMITE_DO_CONTADOR = 99;
+
 // Primeira letra do primeiro nome e do último. Nome de uma palavra só rende uma letra.
 function pegarIniciais(nome) {
   const partes = String(nome || '').trim().split(/\s+/).filter(Boolean);
@@ -51,7 +53,7 @@ function ItemDoMenu({ titulo, icone, ativo, contador, aoTocar }) {
       {temContador ? (
         <View style={styles.contador}>
           <Text testID="contador-do-carrinho" style={styles.textoDoContador}>
-            {contador}
+            {contador > LIMITE_DO_CONTADOR ? `${LIMITE_DO_CONTADOR}+` : contador}
           </Text>
         </View>
       ) : null}
@@ -63,6 +65,12 @@ export default function MenuLateral({ state, navigation, descriptors }) {
   const { usuario, sair } = useUsuario();
   const { quantidade } = useCarrinho();
   const margens = useSafeAreaInsets();
+
+  // Fecho o menu antes de sair. Se não, ele continua aberto por cima do Cadastro.
+  function aoSair() {
+    navigation.closeDrawer();
+    sair();
+  }
 
   // Sem cadastro o menu nem abre, então não tem o que desenhar.
   if (!usuario) {
@@ -102,7 +110,12 @@ export default function MenuLateral({ state, navigation, descriptors }) {
       </DrawerContentScrollView>
 
       <View style={[styles.rodape, { paddingBottom: margens.bottom + styles.rodape.paddingBottom }]}>
-        <Pressable accessibilityRole="button" onPress={sair} style={styles.item}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Sair"
+          onPress={aoSair}
+          style={styles.item}
+        >
           <MaterialCommunityIcons name="logout" size={22} color={cores.textoSuave} />
           <Text style={styles.textoDoItem}>Sair</Text>
         </Pressable>

@@ -28,7 +28,8 @@ export default class LimiteDeErro extends React.Component {
           Não deu para abrir esta tela
         </Text>
         <Text style={styles.mensagem}>
-          O app travou ao montar o que você pediu. Toque em Tentar de novo para carregar outra vez.
+          Alguma coisa deu errado ao carregar esta tela. Toque em Tentar de novo para voltar ao início.
+          Seu carrinho continua do jeito que estava.
         </Text>
         <Pressable
           accessibilityRole="button"

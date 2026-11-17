@@ -1,13 +1,13 @@
 import 'react-native-gesture-handler/jestSetup';
 
-// Os ícones carregam fonte pelo expo-font, que não roda no Jest. Nos testes viram um Text com o nome do ícone.
+// Só para os testes rodarem rápido, sem carregar fonte: cada ícone vira um Text com o nome dele.
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { Text } = require('react-native');
 
-  function MaterialCommunityIcons({ name }) {
+  function Icone({ name }) {
     return React.createElement(Text, { accessibilityElementsHidden: true }, name);
   }
 
-  return { MaterialCommunityIcons };
+  return { MaterialCommunityIcons: Icone, MaterialIcons: Icone, Ionicons: Icone };
 });
