@@ -32,7 +32,7 @@ describe('BarraCategoria', () => {
     const { rerender } = render(<BarraCategoria nome="Lanches" valor={32} percentual={140} />);
     expect(screen.getByTestId('barra-preenchimento')).toHaveStyle({ width: '100%' });
 
-    rerender(<BarraCategoria nome="Lanches" valor={32} percentual={-5} />);
+    rerender(<BarraCategoria nome="Lanches" valor={0} percentual={-5} />);
     expect(screen.getByTestId('barra-preenchimento')).toHaveStyle({ width: '0%' });
   });
 
@@ -40,5 +40,23 @@ describe('BarraCategoria', () => {
     render(<BarraCategoria nome="Lanches" icone="hamburger" valor={32} percentual={42} />);
 
     expect(screen.getByText('hamburger', { includeHiddenElements: true })).toBeOnTheScreen();
+  });
+
+  it('abaixo de 1% escreve "menos de 1%" e deixa um fio de barra', () => {
+    render(<BarraCategoria nome="Doces" icone="cupcake" valor={0.5} percentual={0} />);
+
+    expect(screen.getByText('menos de 1%')).toBeOnTheScreen();
+    expect(screen.queryByText('0%')).toBeNull();
+    expect(screen.getByLabelText('Doces: R$ 0,50, menos de 1% do total')).toBeOnTheScreen();
+    expect(screen.getByTestId('barra-preenchimento')).toHaveStyle({ width: '1%' });
+  });
+
+  it('o trilho fica na mesma coluna do nome, depois do ícone', () => {
+    render(<BarraCategoria nome="Lanches" icone="hamburger" valor={32} percentual={42} />);
+
+    const coluna = screen.getByTestId('barra-coluna');
+    expect(coluna).toContainElement(screen.getByText('Lanches'));
+    expect(coluna).toContainElement(screen.getByTestId('barra-trilho'));
+    expect(coluna).not.toContainElement(screen.getByText('hamburger', { includeHiddenElements: true }));
   });
 });

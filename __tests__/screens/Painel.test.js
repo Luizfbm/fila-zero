@@ -68,11 +68,11 @@ function comPedidos(contexto) {
   });
 }
 
+// O Drawer avisa do foco assim que a tela aparece; aqui o teste faz esse papel.
 async function abrir() {
   const tela = render(<Painel navigation={navigation} />);
-  // Deixa a busca das categorias terminar e o primeiro foco passar.
   await act(async () => {
-    jest.runOnlyPendingTimers();
+    ouvintes.focus();
   });
   return tela;
 }
@@ -82,7 +82,6 @@ function escolherPeriodo(valor) {
 }
 
 beforeEach(() => {
-  jest.useFakeTimers({ doNotFake: ['Date'] });
   carregar = jest.fn().mockResolvedValue(undefined);
   ouvintes = {};
   cancelarOuvinte = jest.fn();
@@ -98,26 +97,21 @@ beforeEach(() => {
   comPedidos({ pedidos: pedidosDeExemplo() });
 });
 
-afterEach(() => {
-  jest.useRealTimers();
-});
-
 describe('Painel: busca dos pedidos', () => {
-  it('carrega os pedidos do usuário ao abrir', async () => {
+  it('carrega os pedidos do usuário quando a tela ganha foco', async () => {
     await abrir();
 
+    expect(navigation.addListener).toHaveBeenCalledWith('focus', expect.any(Function));
     expect(carregar).toHaveBeenCalledTimes(1);
     expect(carregar).toHaveBeenCalledWith('7');
   });
 
-  it('não busca duas vezes quando o foco chega junto com a abertura', async () => {
+  it('não busca por conta própria na montagem, só pelo foco', () => {
+    comPedidos({ pedidos: [] });
     render(<Painel navigation={navigation} />);
-    act(() => ouvintes.focus());
-    await act(async () => {
-      jest.runOnlyPendingTimers();
-    });
 
-    expect(carregar).toHaveBeenCalledTimes(1);
+    expect(carregar).not.toHaveBeenCalled();
+    expect(screen.getByText('Carregando seus pedidos...')).toBeOnTheScreen();
   });
 
   it('carrega de novo quando a tela volta a ter foco', async () => {
@@ -173,16 +167,16 @@ describe('Painel: com pedidos', () => {
 
     expect(screen.getByLabelText('Total gasto: R$ 40,00')).toBeOnTheScreen();
     expect(screen.getByLabelText('Pedidos: 2')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Ticket médio: R$ 20,00')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Mais pedido: Coxinha de frango')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Média por pedido: R$ 20,00')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Seu preferido: Coxinha de frango, 2 unidades')).toBeOnTheScreen();
   });
 
   it('mostra o gasto por categoria em barras, do maior para o menor', async () => {
     await abrir();
 
     expect(screen.getByRole('header', { name: 'Gasto por categoria' })).toBeOnTheScreen();
-    expect(screen.getByLabelText('Lanches: R$ 17,00, 42% do total')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Salgados: R$ 15,00, 38% do total')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Lanches: R$ 17,00, 43% do total')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Salgados: R$ 15,00, 37% do total')).toBeOnTheScreen();
     expect(screen.getByLabelText('Bebidas: R$ 8,00, 20% do total')).toBeOnTheScreen();
     expect(screen.getAllByTestId('barra-preenchimento')).toHaveLength(3);
   });
@@ -194,13 +188,31 @@ describe('Painel: com pedidos', () => {
     expect(screen.getByLabelText('1º Coxinha de frango, 2 unidades, R$ 15,00')).toBeOnTheScreen();
     expect(screen.getByLabelText('2º X-salada, 1 unidade, R$ 17,00')).toBeOnTheScreen();
     expect(screen.getByLabelText('3º Suco de laranja, 1 unidade, R$ 8,00')).toBeOnTheScreen();
+    expect(screen.getByText('2x')).toBeOnTheScreen();
+    expect(screen.queryByText(/un\./)).toBeNull();
+  });
+
+  it('lista separados dois produtos diferentes que têm o mesmo nome', async () => {
+    const pedidos = pedidosDeExemplo();
+    pedidos[0].itens = [
+      { produtoId: '30', nome: 'Combo do dia', preco: 20, quantidade: 2, categoria: 'lanches' },
+      { produtoId: '31', nome: 'Combo do dia', preco: 25, quantidade: 1, categoria: 'lanches' },
+    ];
+    comPedidos({ pedidos: pedidos.slice(0, 1) });
+    const erroNoConsole = jest.spyOn(console, 'error').mockImplementation(() => {});
+    await abrir();
+
+    expect(screen.getByLabelText('1º Combo do dia, 2 unidades, R$ 40,00')).toBeOnTheScreen();
+    expect(screen.getByLabelText('2º Combo do dia, 1 unidade, R$ 25,00')).toBeOnTheScreen();
+    expect(erroNoConsole).not.toHaveBeenCalled();
+    erroNoConsole.mockRestore();
   });
 
   it('oferece os quatro períodos', async () => {
     await abrir();
 
     const rotulos = screen.getByLabelText('Período').props.items.map((opcao) => opcao.label);
-    expect(rotulos).toEqual(['Tudo', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias']);
+    expect(rotulos).toEqual(['Desde o começo', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias']);
   });
 
   it('trocar o período recalcula os indicadores, as barras e a lista', async () => {
@@ -210,7 +222,7 @@ describe('Painel: com pedidos', () => {
 
     expect(screen.getByLabelText('Total gasto: R$ 15,00')).toBeOnTheScreen();
     expect(screen.getByLabelText('Pedidos: 1')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Ticket médio: R$ 15,00')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Média por pedido: R$ 15,00')).toBeOnTheScreen();
     expect(screen.getByLabelText('Salgados: R$ 15,00, 100% do total')).toBeOnTheScreen();
     expect(screen.queryByLabelText(/^Lanches/)).toBeNull();
     expect(screen.queryByLabelText(/X-salada/)).toBeNull();
@@ -220,16 +232,31 @@ describe('Painel: com pedidos', () => {
     expect(screen.getByLabelText('Total gasto: R$ 40,00')).toBeOnTheScreen();
   });
 
-  it('em período sem pedidos, avisa e mantém o seletor na tela', async () => {
+  it('em período sem pedidos, diz qual é o período e mantém o seletor na tela', async () => {
     comPedidos({ pedidos: pedidosDeExemplo().slice(1) });
     await abrir();
 
-    escolherPeriodo('30dias');
+    escolherPeriodo('hoje');
+    expect(screen.getByText('Você não pediu nada hoje')).toBeOnTheScreen();
 
-    expect(screen.getByText('Nenhum pedido neste período.')).toBeOnTheScreen();
+    escolherPeriodo('7dias');
+    expect(screen.getByText('Você não pediu nada nos últimos 7 dias')).toBeOnTheScreen();
+
+    escolherPeriodo('30dias');
+    expect(screen.getByText('Você não pediu nada nos últimos 30 dias')).toBeOnTheScreen();
+    expect(screen.getByText('Escolha outro período para ver seus gastos.')).toBeOnTheScreen();
     expect(screen.getByLabelText('Período')).toBeOnTheScreen();
     expect(screen.queryByLabelText(/^Total gasto/)).toBeNull();
     expect(screen.queryByText('Ver cardápio')).toBeNull();
+  });
+
+  it('o total gasto fecha com a soma das barras mesmo se o total do pedido vier diferente', async () => {
+    const pedidos = pedidosDeExemplo();
+    pedidos[0].total = 99;
+    comPedidos({ pedidos });
+    await abrir();
+
+    expect(screen.getByLabelText('Total gasto: R$ 40,00')).toBeOnTheScreen();
   });
 
   it('não desenha as barras antes de as categorias chegarem', async () => {
