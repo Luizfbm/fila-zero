@@ -87,6 +87,16 @@ Snack: https://snack.expo.dev/sMYNeFGpSkDY9_3E_l-FN
 
 Lá, a prévia aparece na aba Web.
 
+## Protótipo e demonstração
+
+O protótipo das telas está no Figma, com a paleta, os componentes e a navegação entre as telas:
+
+https://www.figma.com/design/2CMWnAGyyEQUianw8l1t4o/Fila-Zero---prot%C3%B3tipo-das-telas
+
+O vídeo de demonstração e o zip do projeto ficam em uma pasta do Google Drive:
+
+https://drive.google.com/drive/folders/1KcTZuc1hY-nBpjArpzA-gH0v6-WBFp_q
+
 ## Dados e API
 
 ### Modo local
