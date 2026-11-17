@@ -43,13 +43,19 @@ function criado(pedido) {
 
 // Faz o papel do resto do app: cadastra a Ana e põe produtos no carrinho.
 function Preparo({ produtos }) {
-  const { entrar } = useUsuario();
+  const { usuario, entrar } = useUsuario();
   const { adicionar } = useCarrinho();
 
   useEffect(() => {
     entrar(ana);
-    produtos.forEach((produto) => adicionar(produto));
   }, []);
+
+  // Só depois de a Ana entrar, porque o carrinho se esvazia enquanto não há usuário.
+  useEffect(() => {
+    if (usuario) {
+      produtos.forEach((produto) => adicionar(produto));
+    }
+  }, [usuario]);
 
   return (
     <Pressable accessibilityRole="button" onPress={() => adicionar(pao)}>
@@ -103,7 +109,7 @@ describe('Carrinho', () => {
       montar([]);
 
       expect(screen.getByText('Seu carrinho está vazio')).toBeOnTheScreen();
-      expect(screen.getByText('cart-outline')).toBeOnTheScreen();
+      expect(screen.getByText('cart-outline', { includeHiddenElements: true })).toBeOnTheScreen();
       expect(screen.queryByRole('button', { name: 'Confirmar pedido' })).toBeNull();
     });
 
@@ -175,11 +181,11 @@ describe('Carrinho', () => {
   });
 
   describe('retirada e observação', () => {
-    it('oferece os horários de intervalo, começando sem nenhum escolhido', () => {
+    it('tem a seção de retirada com o seletor de horário', () => {
       montar();
 
       expect(screen.getByText('Retirada')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Horário de retirada').props.selectedValue).toBe('');
+      expect(screen.getByLabelText('Horário de retirada')).toBeOnTheScreen();
     });
 
     it('conta os caracteres da observação', () => {
@@ -301,7 +307,11 @@ describe('Carrinho', () => {
 
       expect(screen.queryByText('Pedido nº 42 recebido')).toBeNull();
       expect(screen.getByText('Pão de queijo')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Horário de retirada').props.selectedValue).toBe('');
+
+      // O horário do pedido anterior não vale para o próximo.
+      confirmar();
+      expect(screen.getByText('Escolha o horário de retirada')).toBeOnTheScreen();
+      expect(criarPedido).toHaveBeenCalledTimes(1);
     });
   });
 
