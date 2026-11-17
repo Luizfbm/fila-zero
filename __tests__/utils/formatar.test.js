@@ -34,6 +34,12 @@ describe('formatarMoeda', () => {
   it('aceita número em texto', () => {
     expect(formatarMoeda('8.5')).toBe('R$ 8,50');
   });
+
+  it('aceita número em texto escrito com vírgula', () => {
+    expect(formatarMoeda('12,50')).toBe('R$ 12,50');
+    expect(formatarMoeda('1.234,5')).toBe('R$ 1.234,50');
+    expect(formatarMoeda(' 7,5 ')).toBe('R$ 7,50');
+  });
 });
 
 describe('formatarData', () => {
@@ -45,6 +51,16 @@ describe('formatarData', () => {
   it('completa com zero dia, mês, hora e minuto de um dígito', () => {
     const iso = new Date(2026, 0, 5, 7, 4).toISOString();
     expect(formatarData(iso)).toBe('05/01/2026 07:04');
+  });
+
+  it('não volta um dia quando a data vem sem hora', () => {
+    expect(formatarData('2026-11-17')).toBe('17/11/2026 00:00');
+    expect(formatarData('2026-01-01')).toBe('01/01/2026 00:00');
+  });
+
+  it('recusa data sem hora que não existe', () => {
+    expect(formatarData('2026-02-31')).toBe('');
+    expect(formatarData('2026-13-01')).toBe('');
   });
 
   it('devolve texto vazio quando a data não é válida', () => {
@@ -85,6 +101,11 @@ describe('mascararCep', () => {
 
   it('corta o que passar de oito dígitos', () => {
     expect(mascararCep('291000001234')).toBe('29100-000');
+  });
+
+  it('aceita CEP em número, repondo o zero da frente', () => {
+    expect(mascararCep(29100000)).toBe('29100-000');
+    expect(mascararCep(1100000)).toBe('01100-000');
   });
 
   it('devolve texto vazio para valor ausente', () => {

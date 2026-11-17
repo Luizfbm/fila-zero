@@ -65,6 +65,18 @@ describe('cardápio local', () => {
     });
   });
 
+  it('escreve expresso do jeito do cardápio brasileiro', () => {
+    produtosLocais.forEach((produto) => {
+      expect(`${produto.nome} ${produto.descricao}`).not.toMatch(/espresso/i);
+    });
+  });
+
+  it('cobra a tapioca entre R$ 11 e R$ 12', () => {
+    const tapioca = produtosLocais.find((produto) => /tapioca/i.test(produto.nome));
+    expect(tapioca.preco).toBeGreaterThanOrEqual(11);
+    expect(tapioca.preco).toBeLessThanOrEqual(12);
+  });
+
   it('tem itens indisponíveis, mas a maioria disponível', () => {
     const indisponiveis = produtosLocais.filter((produto) => !produto.disponivel);
     expect(indisponiveis.length).toBeGreaterThanOrEqual(2);

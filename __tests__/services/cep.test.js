@@ -50,10 +50,10 @@ describe('buscarCep', () => {
   });
 
   it('recusa CEP que não tem 8 dígitos sem chamar a rede', async () => {
-    await expect(buscarCep('2910')).rejects.toThrow('O CEP tem 8 dígitos');
-    await expect(buscarCep('291000101')).rejects.toThrow('O CEP tem 8 dígitos');
-    await expect(buscarCep('')).rejects.toThrow('O CEP tem 8 dígitos');
-    await expect(buscarCep(undefined)).rejects.toThrow('O CEP tem 8 dígitos');
+    await expect(buscarCep('2910')).rejects.toThrow('O CEP precisa ter 8 números');
+    await expect(buscarCep('291000101')).rejects.toThrow('O CEP precisa ter 8 números');
+    await expect(buscarCep('')).rejects.toThrow('O CEP precisa ter 8 números');
+    await expect(buscarCep(undefined)).rejects.toThrow('O CEP precisa ter 8 números');
     expect(axios.get).not.toHaveBeenCalled();
   });
 

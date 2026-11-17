@@ -54,7 +54,7 @@ describe('validarCadastro', () => {
     it('recusa formato errado', () => {
       ['marina', 'marina@', 'marina@aluno', '@aluno.edu.br', 'ma rina@aluno.edu.br'].forEach(
         (email) => {
-          expect(erros({ email }).email).toBe('Esse e-mail não parece válido');
+          expect(erros({ email }).email).toBe('Confira o e-mail, ele precisa ser no formato nome@exemplo.com');
         }
       );
     });
@@ -70,14 +70,14 @@ describe('validarCadastro', () => {
     });
 
     it('aceita só números', () => {
-      expect(erros({ matricula: '2026-1234' }).matricula).toBe('A matrícula só tem números');
-      expect(erros({ matricula: 'A2026123' }).matricula).toBe('A matrícula só tem números');
+      expect(erros({ matricula: '2026-1234' }).matricula).toBe('Digite só os números da matrícula');
+      expect(erros({ matricula: 'A2026123' }).matricula).toBe('Digite só os números da matrícula');
     });
 
     it('exige de 6 a 10 dígitos', () => {
-      expect(erros({ matricula: '12345' }).matricula).toBe('A matrícula tem de 6 a 10 dígitos');
+      expect(erros({ matricula: '12345' }).matricula).toBe('A matrícula precisa ter de 6 a 10 números');
       expect(erros({ matricula: '12345678901' }).matricula).toBe(
-        'A matrícula tem de 6 a 10 dígitos'
+        'A matrícula precisa ter de 6 a 10 números'
       );
       expect(erros({ matricula: '123456' }).matricula).toBeUndefined();
       expect(erros({ matricula: '1234567890' }).matricula).toBeUndefined();
@@ -95,8 +95,8 @@ describe('validarCadastro', () => {
     });
 
     it('exige 8 dígitos, com ou sem máscara', () => {
-      expect(erros({ cep: '29100-00' }).cep).toBe('O CEP tem 8 dígitos');
-      expect(erros({ cep: '291000001' }).cep).toBe('O CEP tem 8 dígitos');
+      expect(erros({ cep: '29100-00' }).cep).toBe('O CEP precisa ter 8 números');
+      expect(erros({ cep: '291000001' }).cep).toBe('O CEP precisa ter 8 números');
       expect(erros({ cep: '29100000' }).cep).toBeUndefined();
       expect(erros({ cep: '29.100-000' }).cep).toBeUndefined();
     });
@@ -105,6 +105,18 @@ describe('validarCadastro', () => {
   it('pede cidade e UF', () => {
     expect(erros({ cidade: '  ' }).cidade).toBe('Informe a cidade');
     expect(erros({ uf: '' }).uf).toBe('Informe a UF');
+  });
+
+  it('não termina mensagem de uma frase só com ponto', () => {
+    const todas = [
+      ...Object.values(validarCadastro({})),
+      ...Object.values(erros({ email: 'x', matricula: 'a', cep: '1', senha: 'abcdefg' })),
+      ...Object.values(erros({ matricula: '1', senha: 'a1', confirmarSenha: 'b' })),
+      ...Object.values(erros({ confirmarSenha: '' })),
+    ];
+    todas.forEach((mensagem) => {
+      expect(mensagem.endsWith('.')).toBe(false);
+    });
   });
 
   describe('senha', () => {
@@ -120,10 +132,10 @@ describe('validarCadastro', () => {
 
     it('exige letra e número', () => {
       expect(erros({ senha: 'cantina', confirmarSenha: 'cantina' }).senha).toBe(
-        'A senha precisa ter letra e número'
+        'A senha precisa ter pelo menos uma letra e um número'
       );
       expect(erros({ senha: '12345678', confirmarSenha: '12345678' }).senha).toBe(
-        'A senha precisa ter letra e número'
+        'A senha precisa ter pelo menos uma letra e um número'
       );
     });
 
