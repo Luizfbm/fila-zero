@@ -20,7 +20,7 @@ describe('Indicador', () => {
   it('mostra o ícone quando recebe um', () => {
     render(<Indicador rotulo="Pedidos" valor="3" icone="receipt-text-outline" />);
 
-    expect(screen.getByText('receipt-text-outline')).toBeOnTheScreen();
+    expect(screen.getByText('receipt-text-outline', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 
   it('funciona sem ícone', () => {

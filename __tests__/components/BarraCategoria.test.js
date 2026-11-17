@@ -39,6 +39,6 @@ describe('BarraCategoria', () => {
   it('mostra o ícone da categoria quando recebe um', () => {
     render(<BarraCategoria nome="Lanches" icone="hamburger" valor={32} percentual={42} />);
 
-    expect(screen.getByText('hamburger')).toBeOnTheScreen();
+    expect(screen.getByText('hamburger', { includeHiddenElements: true })).toBeOnTheScreen();
   });
 });
