@@ -86,7 +86,7 @@ describe('Seletor', () => {
     const antes = ocupado();
 
     fireEvent(screen.getByLabelText('Categoria'), 'focus');
-    expect(caixa).toHaveStyle({ borderColor: cores.primaria, borderWidth: 2 });
+    expect(caixa).toHaveStyle({ borderColor: cores.texto, borderWidth: 2 });
     expect(ocupado()).toBe(antes);
 
     fireEvent(screen.getByLabelText('Categoria'), 'blur');

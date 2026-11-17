@@ -47,7 +47,7 @@ describe('CampoTexto', () => {
     const campo = screen.getByLabelText('Curso');
 
     fireEvent(campo, 'focus');
-    expect(campo).toHaveStyle({ borderColor: cores.primaria, borderWidth: 2 });
+    expect(campo).toHaveStyle({ borderColor: cores.texto, borderWidth: 2 });
     expect(onFocus).toHaveBeenCalledTimes(1);
 
     fireEvent(campo, 'blur');

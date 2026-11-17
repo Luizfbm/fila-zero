@@ -3,6 +3,7 @@ import {
   formatarData,
   somenteDigitos,
   mascararCep,
+  numeroDoPedido,
 } from '../../src/utils/formatar';
 
 describe('formatarMoeda', () => {
@@ -110,5 +111,26 @@ describe('mascararCep', () => {
 
   it('devolve texto vazio para valor ausente', () => {
     expect(mascararCep(undefined)).toBe('');
+  });
+});
+
+describe('numeroDoPedido', () => {
+  it('tira o prefixo do pedido guardado só no aparelho', () => {
+    expect(numeroDoPedido('local-3')).toBe('3');
+  });
+
+  it('devolve o id da API como texto', () => {
+    expect(numeroDoPedido('12')).toBe('12');
+    expect(numeroDoPedido(12)).toBe('12');
+  });
+
+  it('só tira o prefixo quando ele está no começo', () => {
+    expect(numeroDoPedido('a-local-3')).toBe('a-local-3');
+  });
+
+  it('devolve texto vazio para valor ausente', () => {
+    expect(numeroDoPedido(undefined)).toBe('');
+    expect(numeroDoPedido(null)).toBe('');
+    expect(numeroDoPedido('')).toBe('');
   });
 });
