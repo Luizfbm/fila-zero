@@ -14,41 +14,41 @@ São cinco telas e um menu lateral. Antes do cadastro só existe a tela Criar co
 
 Formulário dividido em três partes: dados pessoais (nome completo, e-mail, matrícula e curso), endereço e senha. Quando a pessoa termina de digitar o CEP, o app consulta o ViaCEP e preenche rua, bairro, cidade e UF. Cada campo mostra o próprio erro logo abaixo, e o botão Criar conta só segue quando tudo está válido. A senha é usada apenas na validação: ela não é guardada nem enviada.
 
-![Tela de cadastro](docs/telas/cadastro.png)
+<img src="docs/telas/cadastro.png" alt="Tela de cadastro" width="260">
 
 ### Cardápio
 
 Lista os produtos (24 no cardápio de exemplo) com nome, descrição e preço. Dá para buscar pelo nome (a busca ignora acento) e filtrar por categoria. O botão Adicionar coloca o item no carrinho e vira um controle de quantidade. Produto esgotado vai para o fim da lista e não pode ser adicionado. Com itens no carrinho, uma barra no rodapé mostra a quantidade e o total e leva para a tela do carrinho.
 
-![Tela do cardápio](docs/telas/cardapio.png)
+<img src="docs/telas/cardapio.png" alt="Tela do cardápio" width="260">
 
 ### Carrinho
 
 Mostra os itens escolhidos, com ajuste de quantidade e remoção. A pessoa escolhe o horário de retirada entre os intervalos de aula (09:50, 12:00, 15:40, 18:30 ou 20:40) e pode escrever uma observação de até 140 caracteres, como "sem cebola". Sem horário escolhido o pedido não é enviado.
 
-![Tela do carrinho](docs/telas/carrinho.png)
+<img src="docs/telas/carrinho-preenchido.png" alt="Tela do carrinho" width="260">
 
 Depois de confirmar, a tela mostra o número do pedido, o horário de retirada e o total, com atalhos para Meus pedidos e para o cardápio.
 
-![Pedido confirmado](docs/telas/pedido-confirmado.png)
+<img src="docs/telas/pedido-confirmado.png" alt="Pedido confirmado" width="260">
 
 ### Meus pedidos
 
 Lista os pedidos da pessoa, do mais novo para o mais antigo, cada um com o horário de retirada e uma etiqueta de status. Tocar em um pedido abre os itens e a observação. O filtro mostra só os pedidos de um status (Recebido, Em preparo, Pronto para retirar ou Retirado). Dá para atualizar a lista pelo botão ou puxando para baixo.
 
-![Tela de pedidos](docs/telas/pedidos.png)
+<img src="docs/telas/pedidos.png" alt="Tela de pedidos" width="260">
 
 ### Painel
 
 Resume os gastos da pessoa na cantina: total gasto, número de pedidos, média por pedido e o item que ela mais pede. Abaixo vêm o gasto por categoria, em barras com o percentual de cada uma, e os cinco itens mais pedidos. Um seletor troca o período entre hoje, últimos 7 dias, últimos 30 dias e desde o começo.
 
-![Tela do painel](docs/telas/painel.png)
+<img src="docs/telas/painel.png" alt="Tela do painel" width="260">
 
 ### Menu lateral
 
 Desenhamos o nosso próprio menu no lugar do padrão do Drawer. No topo ficam as iniciais, o nome e o curso de quem está usando. Cada tela tem um ícone, a tela atual fica marcada e o item Carrinho mostra quantas unidades há nele. No rodapé fica o Sair, que esvazia o carrinho e volta para o cadastro.
 
-![Menu lateral](docs/telas/menu.png)
+<img src="docs/telas/menu.png" alt="Menu lateral" width="260">
 
 ## Onde está cada requisito do trabalho
 
@@ -83,7 +83,7 @@ npm run web
 
 O projeto também abre no Snack da Expo, direto no navegador:
 
-Snack: <link a preencher>
+Snack: https://snack.expo.dev/sMYNeFGpSkDY9_3E_l-FN
 
 Lá, a prévia aparece na aba Web.
 
