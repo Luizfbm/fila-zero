@@ -67,7 +67,16 @@ function montar(contexto = {}) {
 }
 
 function numerosNaTela() {
-  return screen.getAllByText(/^Pedido nº/).map((no) => no.props.children.join(''));
+  return screen.getAllByText(/^Pedido nº/).map((no) => no.props.children.split(',')[0]);
+}
+
+// O Drawer emite focus na primeira exibição e a cada volta para a tela.
+function focar() {
+  const chamadas = navigation.addListener.mock.calls;
+  const [, aoFocar] = chamadas[chamadas.length - 1];
+  act(() => {
+    aoFocar();
+  });
 }
 
 function escolherStatus(valor) {
@@ -89,21 +98,28 @@ afterEach(() => {
 
 describe('Pedidos', () => {
   describe('carga', () => {
-    it('busca os pedidos do usuário quando abre', () => {
+    it('busca os pedidos do usuário quando a tela ganha foco', () => {
       montar();
+
+      expect(navigation.addListener.mock.calls[0][0]).toBe('focus');
+      focar();
 
       expect(carregar).toHaveBeenCalledTimes(1);
       expect(carregar).toHaveBeenCalledWith(7);
     });
 
-    it('busca de novo quando a tela ganha foco e para de ouvir ao sair', () => {
-      const { unmount } = montar();
-      const [evento, aoFocar] = navigation.addListener.mock.calls[0];
+    it('não busca por conta própria na montagem, para não buscar duas vezes ao abrir', () => {
+      montar();
 
-      expect(evento).toBe('focus');
-      act(() => aoFocar());
+      expect(carregar).not.toHaveBeenCalled();
+    });
+
+    it('busca de novo a cada volta para a tela e para de ouvir ao sair', () => {
+      const { unmount } = montar();
+
+      focar();
+      focar();
       expect(carregar).toHaveBeenCalledTimes(2);
-      expect(carregar).toHaveBeenLastCalledWith(7);
 
       unmount();
       expect(tirarOuvinte).toHaveBeenCalled();
@@ -119,8 +135,23 @@ describe('Pedidos', () => {
     it('mantém a lista na tela enquanto atualiza', () => {
       montar({ carregando: true });
 
-      expect(screen.getByText('Pedido nº 12')).toBeOnTheScreen();
+      expect(screen.getByText(/^Pedido nº 12,/)).toBeOnTheScreen();
       expect(screen.queryByText('Carregando seus pedidos...')).toBeNull();
+    });
+
+    it('tem um botão Atualizar que busca de novo', () => {
+      montar();
+
+      fireEvent.press(screen.getByRole('button', { name: 'Atualizar' }));
+
+      expect(carregar).toHaveBeenCalledTimes(1);
+      expect(carregar).toHaveBeenCalledWith(7);
+    });
+
+    it('o botão Atualizar mostra que está buscando', () => {
+      montar({ carregando: true });
+
+      expect(screen.getByRole('button', { name: 'Atualizar', busy: true })).toBeOnTheScreen();
     });
 
     it('puxar a lista chama carregar outra vez', async () => {
@@ -130,7 +161,7 @@ describe('Pedidos', () => {
         screen.getByTestId('pedidos-lista').props.refreshControl.props.onRefresh();
       });
 
-      expect(carregar).toHaveBeenCalledTimes(2);
+      expect(carregar).toHaveBeenCalledTimes(1);
       expect(carregar).toHaveBeenLastCalledWith(7);
     });
   });
@@ -180,6 +211,13 @@ describe('Pedidos', () => {
       expect(screen.getByText('Pronto para retirar')).toBeOnTheScreen();
     });
 
+    it('mostra como retirado o pedido recebido que ficou de outro dia', () => {
+      const antigo = { ...pedidos[1], id: 21, status: 'recebido', criadoEm: '2026-11-10T15:00:00.000Z' };
+      montar({ pedidos: [antigo] });
+
+      expect(screen.getByText('Retirado')).toBeOnTheScreen();
+    });
+
     it('para o relógio quando a tela sai', () => {
       const { unmount } = montar();
 
@@ -196,7 +234,7 @@ describe('Pedidos', () => {
       escolherStatus('pronto');
 
       expect(numerosNaTela()).toEqual(['Pedido nº 11']);
-      expect(screen.getByText('1 pedido')).toBeOnTheScreen();
+      expect(screen.getByText('1 de 3 pedidos')).toBeOnTheScreen();
     });
 
     it('volta a mostrar tudo em Todos os status', () => {
@@ -206,6 +244,7 @@ describe('Pedidos', () => {
       escolherStatus('');
 
       expect(numerosNaTela()).toHaveLength(3);
+      expect(screen.getByText('3 pedidos')).toBeOnTheScreen();
     });
 
     it('filtra pelo status simulado, não pelo gravado', () => {
@@ -223,6 +262,7 @@ describe('Pedidos', () => {
       escolherStatus('recebido');
 
       expect(screen.getByText('Nenhum pedido com esse status')).toBeOnTheScreen();
+      expect(screen.getByText('0 de 3 pedidos')).toBeOnTheScreen();
       expect(screen.queryByText(/^Pedido nº/)).toBeNull();
 
       fireEvent.press(screen.getByRole('button', { name: 'Mostrar todos' }));
@@ -236,6 +276,7 @@ describe('Pedidos', () => {
       montar({ pedidos: [] });
 
       expect(screen.getByText('Você ainda não fez nenhum pedido')).toBeOnTheScreen();
+      expect(screen.getByText('Os pedidos que você fizer pelo app aparecem aqui.')).toBeOnTheScreen();
       expect(screen.queryByLabelText('Status')).toBeNull();
 
       fireEvent.press(screen.getByRole('button', { name: 'Ver cardápio' }));
@@ -255,7 +296,7 @@ describe('Pedidos', () => {
 
       fireEvent.press(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-      expect(carregar).toHaveBeenCalledTimes(2);
+      expect(carregar).toHaveBeenCalledTimes(1);
       expect(carregar).toHaveBeenLastCalledWith(7);
     });
 
@@ -263,7 +304,7 @@ describe('Pedidos', () => {
       montar({ erro });
 
       expect(screen.getByText(erro)).toBeOnTheScreen();
-      expect(screen.getByText('Pedido nº 12')).toBeOnTheScreen();
+      expect(screen.getByText(/^Pedido nº 12,/)).toBeOnTheScreen();
     });
   });
 
@@ -273,20 +314,20 @@ describe('Pedidos', () => {
 
       expect(screen.queryByText('Sem gelo no suco')).toBeNull();
 
-      fireEvent.press(screen.getByText('Pedido nº 12'));
+      fireEvent.press(screen.getByText(/^Pedido nº 12,/));
       expect(screen.getByText('2x Coxinha')).toBeOnTheScreen();
       expect(screen.getByText('R$ 13,00')).toBeOnTheScreen();
       expect(screen.getByText('Sem gelo no suco')).toBeOnTheScreen();
 
-      fireEvent.press(screen.getByText('Pedido nº 12'));
+      fireEvent.press(screen.getByText(/^Pedido nº 12,/));
       expect(screen.queryByText('Sem gelo no suco')).toBeNull();
     });
 
     it('deixa só um pedido aberto por vez', () => {
       montar();
 
-      fireEvent.press(screen.getByText('Pedido nº 12'));
-      fireEvent.press(screen.getByText('Pedido nº 11'));
+      fireEvent.press(screen.getByText(/^Pedido nº 12,/));
+      fireEvent.press(screen.getByText(/^Pedido nº 11,/));
 
       expect(screen.getByText('1x Café')).toBeOnTheScreen();
       expect(screen.queryByText('Sem gelo no suco')).toBeNull();
