@@ -40,8 +40,6 @@ yarn-error.*
 /ios
 /android
 
-# ferramentas locais
-.claude/
 coverage/
 entrega/tmp/
 entrega/
