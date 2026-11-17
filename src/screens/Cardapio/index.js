@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Aviso from '../../components/Aviso';
 import BarraCarrinho from '../../components/BarraCarrinho';
 import CampoTexto from '../../components/CampoTexto';
@@ -11,7 +12,8 @@ import { useCarrinho } from '../../contexts/CarrinhoContext';
 import { useUsuario } from '../../contexts/UsuarioContext';
 import { ROTAS } from '../../navigation/rotas';
 import { listarCategorias, listarProdutos } from '../../services/produtos';
-import styles from './styles';
+import { cores } from '../../theme';
+import styles, { LARGURA_MAXIMA } from './styles';
 
 const TODAS = '';
 
@@ -19,13 +21,25 @@ const TODAS = '';
 function semAcento(texto) {
   return String(texto || '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
 }
 
-function contar(total) {
-  return total === 1 ? '1 item' : `${total} itens`;
+function contar(achados, total) {
+  return `${achados} de ${total} ${total === 1 ? 'produto' : 'produtos'}`;
+}
+
+// Esgotado vai para o fim; dentro de cada grupo a ordem do serviço continua.
+function disponiveisPrimeiro(lista) {
+  return [
+    ...lista.filter((produto) => produto.disponivel),
+    ...lista.filter((produto) => !produto.disponivel),
+  ];
+}
+
+function sempre() {
+  return true;
 }
 
 function Separador() {
@@ -44,7 +58,8 @@ export default function Cardapio({ navigation }) {
   const [busca, setBusca] = useState('');
   const [categoria, setCategoria] = useState(TODAS);
 
-  async function carregar() {
+  // `continuar` diz se a tela ainda está aberta; se ela fechou no meio da carga, a resposta é descartada.
+  async function carregar(continuar = sempre) {
     setCarregando(true);
     setErro(false);
     try {
@@ -52,18 +67,24 @@ export default function Cardapio({ navigation }) {
         listarProdutos(),
         listarCategorias(),
       ]);
+      if (!continuar()) return;
+      const algumLocal = respostaProdutos.origem === 'local' || respostaCategorias.origem === 'local';
       setProdutos(respostaProdutos.dados);
       setCategorias(respostaCategorias.dados);
-      setOrigem(respostaProdutos.origem);
+      setOrigem(algumLocal ? 'local' : 'api');
     } catch (falha) {
+      if (!continuar()) return;
       setErro(true);
-    } finally {
-      setCarregando(false);
     }
+    setCarregando(false);
   }
 
   useEffect(() => {
-    carregar();
+    let ativo = true;
+    carregar(() => ativo);
+    return () => {
+      ativo = false;
+    };
   }, []);
 
   function limparFiltros() {
@@ -74,10 +95,6 @@ export default function Cardapio({ navigation }) {
   function quantidadeNoCarrinho(produtoId) {
     const item = itens.find((atual) => atual.produto.id === produtoId);
     return item ? item.quantidade : 0;
-  }
-
-  function aumentar(produto) {
-    alterarQuantidade(produto.id, quantidadeNoCarrinho(produto.id) + 1);
   }
 
   // Chegando a zero o próprio carrinho tira o item.
@@ -100,7 +117,7 @@ export default function Cardapio({ navigation }) {
           <Aviso
             tipo="erro"
             mensagem="Não deu para carregar o cardápio."
-            acao={{ titulo: 'Tentar de novo', onPress: carregar }}
+            acao={{ titulo: 'Tentar de novo', onPress: () => carregar() }}
           />
         </View>
       </View>
@@ -111,11 +128,13 @@ export default function Cardapio({ navigation }) {
   const procurado = semAcento(busca);
   const categoriaEscolhida = categorias.find((item) => item.id === categoria);
 
-  const visiveis = produtos.filter((produto) => {
-    const daCategoria = categoria === TODAS || produto.categoria === categoria;
-    const doNome = procurado === '' || semAcento(produto.nome).includes(procurado);
-    return daCategoria && doNome;
-  });
+  const visiveis = disponiveisPrimeiro(
+    produtos.filter((produto) => {
+      const daCategoria = categoria === TODAS || produto.categoria === categoria;
+      const doNome = procurado === '' || semAcento(produto.nome).includes(procurado);
+      return daCategoria && doNome;
+    })
+  );
 
   const opcoes = [
     { rotulo: 'Todas as categorias', valor: TODAS },
@@ -125,13 +144,13 @@ export default function Cardapio({ navigation }) {
   function mensagemDeVazio() {
     const termo = busca.trim();
     if (termo && categoriaEscolhida) {
-      return `Nenhum item de ${categoriaEscolhida.nome} tem "${termo}" no nome.`;
+      return `Nada com "${termo}" em ${categoriaEscolhida.nome}.`;
     }
     if (termo) {
-      return `Nenhum item tem "${termo}" no nome.`;
+      return `Nada com "${termo}" no cardápio.`;
     }
     if (categoriaEscolhida) {
-      return `Ainda não tem nenhum item em ${categoriaEscolhida.nome}.`;
+      return `Nenhum item em ${categoriaEscolhida.nome} por enquanto.`;
     }
     return 'A cantina ainda não cadastrou nenhum item.';
   }
@@ -143,20 +162,20 @@ export default function Cardapio({ navigation }) {
       <Text style={styles.saudacao} accessibilityRole="header">
         {primeiroNome ? `Oi, ${primeiroNome}` : 'Oi'}
       </Text>
-      <Text style={styles.chamada}>O que você vai pedir hoje?</Text>
 
       {origem === 'local' ? (
-        <Aviso
-          tipo="info"
-          mensagem="Este cardápio é de exemplo e está guardado no aparelho."
-          style={styles.avisoLocal}
-        />
+        <View style={styles.avisoLocal}>
+          <MaterialCommunityIcons name="information-outline" size={16} color={cores.textoSuave} />
+          <Text style={styles.avisoLocalTexto}>
+            Este é um cardápio de exemplo. Itens e preços podem não ser os da cantina.
+          </Text>
+        </View>
       ) : null}
 
       <View style={styles.filtros}>
         <CampoTexto
           rotulo="Buscar no cardápio"
-          placeholder="Nome do item"
+          placeholder="Ex.: coxinha"
           value={busca}
           onChangeText={setBusca}
           autoCapitalize="none"
@@ -173,9 +192,9 @@ export default function Cardapio({ navigation }) {
         />
       </View>
 
-      {visiveis.length > 0 ? (
+      {filtrando && visiveis.length > 0 ? (
         <Text style={styles.contador} accessibilityLiveRegion="polite">
-          {contar(visiveis.length)}
+          {contar(visiveis.length, produtos.length)}
         </Text>
       ) : null}
     </View>
@@ -183,7 +202,7 @@ export default function Cardapio({ navigation }) {
 
   const vazio = (
     <EstadoVazio
-      icone="magnify-close"
+      icone={filtrando ? 'magnify-close' : 'food-off'}
       titulo={filtrando ? 'Nada encontrado' : 'Cardápio vazio'}
       mensagem={mensagemDeVazio()}
       acao={filtrando ? { titulo: 'Limpar filtros', onPress: limparFiltros } : undefined}
@@ -201,7 +220,7 @@ export default function Cardapio({ navigation }) {
             categoria={categorias.find((atual) => atual.id === item.categoria)}
             quantidade={quantidadeNoCarrinho(item.id)}
             aoAdicionar={adicionar}
-            aoAumentar={aumentar}
+            aoAumentar={adicionar}
             aoDiminuir={diminuir}
           />
         )}
@@ -216,6 +235,7 @@ export default function Cardapio({ navigation }) {
         quantidade={quantidade}
         total={total}
         aoAbrir={() => navigation.navigate(ROTAS.CARRINHO)}
+        larguraMaxima={LARGURA_MAXIMA}
       />
     </View>
   );

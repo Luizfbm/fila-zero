@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { cores, espacos, fontes, raios, sombra } from '../../theme';
 
 export default StyleSheet.create({
-  // A faixa ocupa a largura da tela; a barra dentro dela para em 720 e fica no meio.
+  // A faixa ocupa a largura da tela; a barra dentro dela para na largura que a tela mandar e fica no meio.
   faixa: {
     paddingHorizontal: espacos.md,
     paddingVertical: espacos.sm,
@@ -13,12 +13,12 @@ export default StyleSheet.create({
   barra: {
     ...sombra,
     width: '100%',
-    maxWidth: 720,
     alignSelf: 'center',
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: espacos.sm,
+    justifyContent: 'space-between',
+    gap: espacos.md,
     paddingHorizontal: espacos.md,
     paddingVertical: espacos.sm,
     borderRadius: raios.md,
@@ -28,9 +28,15 @@ export default StyleSheet.create({
     backgroundColor: cores.primariaEscura,
   },
   resumo: {
-    ...fontes.corpo,
-    flex: 1,
-    fontWeight: '600',
+    flexShrink: 1,
+  },
+  itens: {
+    ...fontes.legenda,
+    color: cores.textoSobrePrimaria,
+  },
+  total: {
+    ...fontes.subtitulo,
+    fontWeight: '700',
     color: cores.textoSobrePrimaria,
   },
   acao: {

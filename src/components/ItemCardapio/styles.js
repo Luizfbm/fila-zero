@@ -1,6 +1,8 @@
 import { StyleSheet } from 'react-native';
 import { cores, espacos, fontes, raios } from '../../theme';
 
+const LADO_DO_ICONE = 48;
+
 export default StyleSheet.create({
   cartao: {
     gap: espacos.sm,
@@ -10,13 +12,17 @@ export default StyleSheet.create({
     alignItems: 'flex-start',
     gap: espacos.md,
   },
-  // O esgotado continua legível, só perde força perto dos outros.
+  // No esgotado só o ícone e o preço perdem força; nome e descrição
+  // ficam na cor suave para continuarem fáceis de ler.
   esmaecido: {
     opacity: 0.55,
   },
+  textoEsgotado: {
+    color: cores.textoSuave,
+  },
   icone: {
-    width: 48,
-    height: 48,
+    width: LADO_DO_ICONE,
+    height: LADO_DO_ICONE,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: raios.pilula,
@@ -31,12 +37,12 @@ export default StyleSheet.create({
   },
   descricao: {
     ...fontes.legenda,
-    fontSize: 14,
-    lineHeight: 20,
   },
   // Preço de um lado e ação do outro, numa linha só: no celular estreito
   // o nome e a descrição ficam com a largura toda do cartão.
+  // O recuo põe o preço na mesma margem do nome.
   rodape: {
+    paddingLeft: LADO_DO_ICONE + espacos.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -44,7 +50,8 @@ export default StyleSheet.create({
     minHeight: 48,
   },
   preco: {
-    ...fontes.subtitulo,
+    ...fontes.corpo,
+    fontWeight: '700',
     color: cores.primariaEscura,
   },
   adicionar: {
@@ -64,7 +71,6 @@ export default StyleSheet.create({
   },
   adicionarTexto: {
     ...fontes.corpo,
-    fontSize: 15,
     fontWeight: '600',
     color: cores.primariaEscura,
   },

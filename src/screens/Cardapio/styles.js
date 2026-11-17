@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { cores, espacos, fontes } from '../../theme';
 
 // No navegador largo o conteúdo para nessa largura e fica no meio da tela.
-const LARGURA_MAXIMA = 720;
+export const LARGURA_MAXIMA = 720;
 
 export default StyleSheet.create({
   tela: {
@@ -35,26 +35,29 @@ export default StyleSheet.create({
   },
   saudacao: {
     ...fontes.titulo,
-  },
-  chamada: {
-    ...fontes.corpo,
-    color: cores.textoSuave,
-    marginTop: espacos.xs,
-    marginBottom: espacos.md,
+    marginBottom: espacos.sm,
   },
   avisoLocal: {
-    marginBottom: espacos.md,
-    paddingVertical: espacos.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: espacos.xs,
+    marginBottom: espacos.sm,
   },
-  // Busca em cima e categoria embaixo no celular; lado a lado quando couber.
+  avisoLocalTexto: {
+    ...fontes.legenda,
+    flex: 1,
+  },
+  // Com essa base os dois campos só cabem lado a lado em tela de 480 para cima;
+  // abaixo disso a categoria desce para a linha seguinte.
   filtros: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     columnGap: espacos.md,
+    marginTop: espacos.sm,
   },
   filtro: {
     flexGrow: 1,
-    flexBasis: 260,
+    flexBasis: 216,
   },
   contador: {
     ...fontes.legenda,

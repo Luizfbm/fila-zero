@@ -49,15 +49,12 @@ export default function ItemCardapio({
 
   return (
     <Cartao style={styles.cartao}>
-      <View
-        testID="item-cardapio-conteudo"
-        style={[styles.conteudo, esgotado && styles.esmaecido]}
-      >
-        <View style={styles.icone}>
+      <View style={styles.conteudo}>
+        <View testID="item-cardapio-icone" style={[styles.icone, esgotado && styles.esmaecido]}>
           <MaterialCommunityIcons name={icone} size={24} color={cores.primariaEscura} />
         </View>
         <View style={styles.textos}>
-          <Text style={styles.nome}>{produto.nome}</Text>
+          <Text style={[styles.nome, esgotado && styles.textoEsgotado]}>{produto.nome}</Text>
           {produto.descricao ? (
             <Text style={styles.descricao} numberOfLines={2}>
               {produto.descricao}
