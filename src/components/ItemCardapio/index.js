@@ -28,6 +28,7 @@ export default function ItemCardapio({
       return (
         <ControleQuantidade
           valor={quantidade}
+          nome={produto.nome}
           aoDiminuir={() => aoDiminuir(produto)}
           aoAumentar={() => aoAumentar(produto)}
         />

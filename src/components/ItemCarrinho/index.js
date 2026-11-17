@@ -35,7 +35,12 @@ export default function ItemCarrinho({ item, aoAumentar, aoDiminuir, aoRemover }
         </Pressable>
       </View>
       <View style={styles.rodape}>
-        <ControleQuantidade valor={quantidade} aoDiminuir={aoDiminuir} aoAumentar={aoAumentar} />
+        <ControleQuantidade
+          valor={quantidade}
+          nome={produto.nome}
+          aoDiminuir={aoDiminuir}
+          aoAumentar={aoAumentar}
+        />
         <View style={styles.subtotal}>
           <Text style={styles.rotuloSubtotal}>Subtotal</Text>
           <Text style={styles.valorSubtotal}>{formatarMoeda(subtotal)}</Text>
