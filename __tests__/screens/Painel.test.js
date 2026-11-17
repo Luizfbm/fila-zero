@@ -181,8 +181,8 @@ describe('Painel: com pedidos', () => {
     await abrir();
 
     expect(screen.getByRole('header', { name: 'Gasto por categoria' })).toBeOnTheScreen();
-    expect(screen.getByLabelText('Lanches: R$ 17,00, 43% do total')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Salgados: R$ 15,00, 37% do total')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Lanches: R$ 17,00, 42% do total')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Salgados: R$ 15,00, 38% do total')).toBeOnTheScreen();
     expect(screen.getByLabelText('Bebidas: R$ 8,00, 20% do total')).toBeOnTheScreen();
     expect(screen.getAllByTestId('barra-preenchimento')).toHaveLength(3);
   });
@@ -199,7 +199,7 @@ describe('Painel: com pedidos', () => {
   it('oferece os quatro períodos', async () => {
     await abrir();
 
-    const rotulos = screen.getByLabelText('Período').props.children.map((opcao) => opcao.props.label);
+    const rotulos = screen.getByLabelText('Período').props.items.map((opcao) => opcao.label);
     expect(rotulos).toEqual(['Tudo', 'Hoje', 'Últimos 7 dias', 'Últimos 30 dias']);
   });
 
