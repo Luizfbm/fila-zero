@@ -129,6 +129,23 @@ describe('MenuLateral', () => {
     expect(screen.getByRole('button', { name: 'Carrinho, 1 item' })).toBeOnTheScreen();
   });
 
+  it('mostra 99 no contador enquanto cabe', async () => {
+    useCarrinho.mockReturnValue({ itens: [], total: 0, quantidade: 99 });
+
+    await abrirMenu();
+
+    expect(screen.getByTestId('contador-do-carrinho')).toHaveTextContent('99');
+  });
+
+  it('troca o contador por 99+ a partir de 100 itens', async () => {
+    useCarrinho.mockReturnValue({ itens: [], total: 0, quantidade: 100 });
+
+    await abrirMenu();
+
+    expect(screen.getByTestId('contador-do-carrinho')).toHaveTextContent('99+');
+    expect(screen.getByRole('button', { name: 'Carrinho, 100 itens' })).toBeOnTheScreen();
+  });
+
   it('chama sair ao tocar em Sair', async () => {
     await abrirMenu();
 

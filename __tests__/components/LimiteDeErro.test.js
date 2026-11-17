@@ -48,6 +48,11 @@ describe('LimiteDeErro', () => {
     expect(screen.queryByText('Tela funcionando')).toBeNull();
     expect(screen.getByRole('alert')).toBeOnTheScreen();
     expect(screen.getByText('Não deu para abrir esta tela')).toBeOnTheScreen();
+    expect(
+      screen.getByText(
+        'Alguma coisa deu errado ao carregar esta tela. Toque em Tentar de novo para voltar ao início. Seu carrinho continua do jeito que estava.'
+      )
+    ).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeOnTheScreen();
   });
 
