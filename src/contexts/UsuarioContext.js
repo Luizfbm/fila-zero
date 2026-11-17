@@ -1,16 +1,21 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const UsuarioContext = createContext({ usuario: null, entrar: () => {}, sair: () => {} });
 
 export function UsuarioProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
 
-  const entrar = useCallback((novoUsuario) => setUsuario(novoUsuario), []);
-  const sair = useCallback(() => setUsuario(null), []);
+  function entrar(novoUsuario) {
+    setUsuario(novoUsuario);
+  }
 
-  const valor = useMemo(() => ({ usuario, entrar, sair }), [usuario, entrar, sair]);
+  function sair() {
+    setUsuario(null);
+  }
 
-  return <UsuarioContext.Provider value={valor}>{children}</UsuarioContext.Provider>;
+  return (
+    <UsuarioContext.Provider value={{ usuario, entrar, sair }}>{children}</UsuarioContext.Provider>
+  );
 }
 
 export function useUsuario() {
