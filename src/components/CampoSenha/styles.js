@@ -25,7 +25,7 @@ export default StyleSheet.create({
   // A borda engrossa 1 px no foco e o espaço interno some, então a caixa não muda de tamanho.
   caixaFocada: {
     borderWidth: 2,
-    borderColor: cores.primaria,
+    borderColor: cores.texto,
     padding: 0,
   },
   caixaComErro: {

@@ -25,7 +25,7 @@ export default StyleSheet.create({
   // A borda engrossa 1 px no foco e o espaço interno encolhe 1 px, então nada sai do lugar.
   campoFocado: {
     borderWidth: 2,
-    borderColor: cores.primaria,
+    borderColor: cores.texto,
     paddingHorizontal: espacos.md - 1,
     paddingVertical: espacos.sm - 1,
   },
