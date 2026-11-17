@@ -2,7 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, configure, fireEvent, render, screen } from '@testing-library/react-native';
 import MenuLateral from '../../src/navigation/MenuLateral';
 import { ROTAS } from '../../src/navigation/rotas';
 import { useUsuario } from '../../src/contexts/UsuarioContext';
@@ -46,9 +46,18 @@ function Navegacao() {
   );
 }
 
+// O drawer fechado fica marcado como escondido para leitor de tela, e no Jest essa marca
+// não muda quando ele abre. Por isso as buscas daqui também olham elementos escondidos.
+beforeAll(() => {
+  configure({ defaultIncludeHiddenElements: true });
+});
+
+afterAll(() => {
+  configure({ defaultIncludeHiddenElements: false });
+});
+
 async function abrirMenu() {
   render(<Navegacao />);
-  fireEvent.press(screen.getByLabelText('Show navigation menu'));
   await act(() => jest.runAllTimers());
 }
 
@@ -93,9 +102,8 @@ describe('MenuLateral', () => {
     await act(() => jest.runAllTimers());
 
     expect(screen.getByText('Tela dos pedidos')).toBeOnTheScreen();
-    expect(
-      screen.getByRole('button', { name: 'Meus pedidos', includeHiddenElements: true })
-    ).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Meus pedidos' })).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Cardápio' })).not.toBeSelected();
   });
 
   it('não mostra contador com o carrinho vazio', async () => {
