@@ -13,7 +13,7 @@ describe('Etiqueta', () => {
   it.each([
     ['neutro', cores.borda],
     ['sucesso', cores.sucessoClaro],
-    ['alerta', cores.destaque],
+    ['alerta', cores.alertaClaro],
     ['erro', cores.erroClaro],
   ])('o tom %s muda a cor de fundo', (tom, fundo) => {
     render(<Etiqueta texto="pronto" tom={tom} />);

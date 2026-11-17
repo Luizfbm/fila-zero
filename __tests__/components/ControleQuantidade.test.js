@@ -35,13 +35,13 @@ describe('ControleQuantidade', () => {
     expect(aoAumentar).toHaveBeenCalledTimes(1);
   });
 
-  it('os dois botões têm área de toque de pelo menos 44', () => {
+  it('os dois botões têm 48 de lado, como o Botao', () => {
     render(
       <ControleQuantidade valor={1} aoDiminuir={jest.fn()} aoAumentar={jest.fn()} />
     );
 
     screen.getAllByRole('button').forEach((botao) => {
-      expect(botao).toHaveStyle({ minWidth: 44, minHeight: 44 });
+      expect(botao).toHaveStyle({ minWidth: 48, minHeight: 48 });
     });
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 import CampoTexto from '../../src/components/CampoTexto';
 import { cores } from '../../src/theme';
@@ -33,7 +34,8 @@ describe('CampoTexto', () => {
     render(<CampoTexto rotulo="E-mail" />);
 
     expect(screen.getByLabelText('E-mail')).toHaveStyle({
-      borderColor: cores.borda,
+      borderColor: cores.bordaCampo,
+      borderWidth: 1,
     });
     expect(screen.queryByRole('alert')).toBeNull();
   });
@@ -45,11 +47,33 @@ describe('CampoTexto', () => {
     const campo = screen.getByLabelText('Curso');
 
     fireEvent(campo, 'focus');
-    expect(campo).toHaveStyle({ borderColor: cores.primaria });
+    expect(campo).toHaveStyle({ borderColor: cores.primaria, borderWidth: 2 });
     expect(onFocus).toHaveBeenCalledTimes(1);
 
     fireEvent(campo, 'blur');
-    expect(campo).toHaveStyle({ borderColor: cores.borda });
+    expect(campo).toHaveStyle({ borderColor: cores.bordaCampo, borderWidth: 1 });
     expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('a borda mais grossa do foco não muda o tamanho do campo', () => {
+    render(<CampoTexto rotulo='Curso' />);
+    const campo = screen.getByLabelText('Curso');
+    const ocupado = () => {
+      const { borderWidth, paddingHorizontal, paddingVertical } = StyleSheet.flatten(
+        campo.props.style
+      );
+      return [borderWidth + paddingHorizontal, borderWidth + paddingVertical];
+    };
+
+    const antes = ocupado();
+    fireEvent(campo, 'focus');
+
+    expect(ocupado()).toEqual(antes);
+  });
+
+  it('aceita um estilo de fora no contêiner', () => {
+    render(<CampoTexto rotulo='Curso' style={{ marginBottom: 0 }} />);
+
+    expect(screen.root).toHaveStyle({ marginBottom: 0 });
   });
 });

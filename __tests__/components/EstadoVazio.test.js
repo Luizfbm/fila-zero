@@ -41,4 +41,17 @@ describe('EstadoVazio', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  it('limita a largura da mensagem para não virar uma linha comprida', () => {
+    render(
+      <EstadoVazio
+        titulo='Nenhum pedido por aqui'
+        mensagem='Quando você pedir um lanche, ele aparece nesta lista.'
+      />
+    );
+
+    expect(
+      screen.getByText('Quando você pedir um lanche, ele aparece nesta lista.')
+    ).toHaveStyle({ maxWidth: 320 });
+  });
 });
