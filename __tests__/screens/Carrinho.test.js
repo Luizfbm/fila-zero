@@ -141,7 +141,7 @@ describe('Carrinho', () => {
     it('aumentar a quantidade muda o subtotal e o total', () => {
       montar();
 
-      fireEvent.press(screen.getAllByRole('button', { name: 'Aumentar quantidade' })[0]);
+      fireEvent.press(screen.getByRole('button', { name: 'Aumentar quantidade de Coxinha de frango' }));
 
       expect(screen.getByText('R$ 13,00')).toBeOnTheScreen();
       expect(screen.getByText('R$ 23,00')).toBeOnTheScreen();
@@ -150,7 +150,7 @@ describe('Carrinho', () => {
     it('diminuir a quantidade muda o subtotal e o total', () => {
       montar();
 
-      fireEvent.press(screen.getAllByRole('button', { name: 'Diminuir quantidade' })[1]);
+      fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Suco de laranja' }));
 
       expect(screen.getByText('R$ 5,00')).toBeOnTheScreen();
       expect(screen.getByText('R$ 11,50')).toBeOnTheScreen();
@@ -159,7 +159,7 @@ describe('Carrinho', () => {
     it('diminuir quando só tem uma unidade tira o item', () => {
       montar();
 
-      fireEvent.press(screen.getAllByRole('button', { name: 'Diminuir quantidade' })[0]);
+      fireEvent.press(screen.getByRole('button', { name: 'Diminuir quantidade de Coxinha de frango' }));
 
       expect(screen.queryByText('Coxinha de frango')).toBeNull();
       expect(screen.getAllByText('R$ 10,00')).toHaveLength(2);
