@@ -45,7 +45,7 @@ describe('CampoSenha', () => {
     const caixa = screen.getByTestId('campo-senha-caixa');
 
     fireEvent(screen.getByLabelText('Senha'), 'focus');
-    expect(caixa).toHaveStyle({ borderColor: cores.primaria, borderWidth: 2 });
+    expect(caixa).toHaveStyle({ borderColor: cores.texto, borderWidth: 2 });
     expect(onFocus).toHaveBeenCalledTimes(1);
 
     fireEvent(screen.getByLabelText('Senha'), 'blur');
