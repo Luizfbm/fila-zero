@@ -10,6 +10,8 @@ export const cores = {
   fundo: '#FBF7F0',
   superficie: '#FFFFFF',
   borda: '#E4DCCF',
+  bordaCampo: '#8C8279',
+  alertaClaro: '#FBEFD0',
   texto: '#2B2420',
   textoSuave: '#6B625A',
   textoSobrePrimaria: '#FFFFFF',
