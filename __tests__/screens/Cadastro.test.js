@@ -167,6 +167,20 @@ describe('Cadastro', () => {
     expect(buscarCep).toHaveBeenCalledWith('29100000');
   });
 
+  it('os erros de CEP, cidade e UF somem assim que o CEP preenche o endereço', async () => {
+    render(<Cadastro />);
+    enviar();
+    await screen.findByText('Informe a cidade');
+
+    digitar('CEP', '29100000');
+    await waitFor(() => expect(screen.getByLabelText('Cidade').props.value).toBe('Vila Velha'));
+
+    expect(await screen.findByText('Corrija os 5 campos marcados em vermelho.')).toBeOnTheScreen();
+    expect(screen.queryByText('Informe o CEP')).toBeNull();
+    expect(screen.queryByText('Informe a cidade')).toBeNull();
+    expect(screen.queryByText('Informe a UF')).toBeNull();
+  });
+
   it('deixa a pessoa editar o endereço que veio do CEP', async () => {
     render(<Cadastro />);
     digitar('CEP', '29100000');
