@@ -4,14 +4,9 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Cartao from '../Cartao';
 import Etiqueta from '../Etiqueta';
 import { cores } from '../../theme';
-import { formatarData, formatarMoeda } from '../../utils/formatar';
+import { formatarData, formatarMoeda, numeroDoPedido } from '../../utils/formatar';
 import { rotuloStatus, tomStatus } from '../../utils/statusPedido';
 import styles from './styles';
-
-// Pedido guardado só no aparelho tem id "local-1"; para quem lê, o número é 1.
-function numeroDoPedido(id) {
-  return String(id).replace(/^local-/, '');
-}
 
 export default function CartaoPedido({ pedido, status, aberto = false, aoAlternar }) {
   const itens = pedido.itens || [];
